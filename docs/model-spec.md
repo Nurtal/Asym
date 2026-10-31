@@ -329,6 +329,7 @@ above, they take precedence.
 - Whether circles add an allocation priority bonus on top of x^β.
 - Calibration of archetype centres and noise levels. A first calibration towards
   Dunbar-like ratios is in `docs/experiments/02-calibrated-layering-scaling.md`. It holds
-  at N ≈ 100, but the outer ratio grows with N: open question of what caps the
-  acquaintance layer.
+  at N ≈ 100 under the baseline exploration. With `exploration: ties` the layers are
+  close to independent of N (experiment 05), but the ratios are about 2.5; that set
+  still needs its own calibration.
 - Mapping the arbitrary time unit to days/weeks.

@@ -113,3 +113,16 @@ def test_graceful_on_empty_and_after_disk_round_trip(tmp_path):
     loaded = SimulationResult.load(path)
     np.testing.assert_array_equal(M.circle_sizes(loaded), M.circle_sizes(res))
     assert M.churn(loaded) == M.churn(res)
+
+
+def test_layering_by_archetype():
+    rows = [(0.0, "a", "b", 0.9, 0, 0, 4), (0.0, "a", "c", 0.6, 0, 0, 3), (0.0, "b", "a", 0.9, 0, 0, 4),
+            (0.0, "c", "d", 0.2, 0, 0, 1)]
+    agents = [{"id": "a", "archetype": "x"}, {"id": "b", "archetype": "y"}, {"id": "c", "archetype": "x"},
+              {"id": "d"}]
+    res = SimulationResult.build(IDS, (0.0,), rows, config={"agents": agents})
+    by = M.layering_by_archetype(res)
+    assert set(by) == {"x", "y", None}
+    np.testing.assert_allclose(by["x"], [0.5, 1.0, 1.0, 1.5])  # a: [1,2,2,2], c: [0,0,0,1]
+    np.testing.assert_allclose(by["y"], [1, 1, 1, 1])
+    np.testing.assert_allclose(by[None], [0, 0, 0, 0])

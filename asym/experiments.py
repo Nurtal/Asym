@@ -203,7 +203,22 @@ def analyse_layering(runs: dict) -> dict:
     return report
 
 
-ANALYSES = {"layering": analyse_layering}
+def analyse_layering_by_archetype(runs: dict) -> dict:
+    """Per condition and archetype: time-averaged layer sizes with 95% CIs over seeds."""
+    report = {"conditions": {}}
+    for c, rs in runs.items():
+        per_run = []
+        for r in rs:
+            snaps = [metrics.layering_by_archetype(r, at=k) for k in range(len(r.times))]
+            per_run.append({g: np.mean([s[g] for s in snaps], axis=0) for g in snaps[0]} if snaps else {})
+        groups = list(dict.fromkeys(g for pr in per_run for g in pr))
+        report["conditions"][c] = {
+            str(g): {"layer_sizes": [_ci([pr[g][k] for pr in per_run if g in pr]) for k in range(4)]} for g in groups
+        }
+    return report
+
+
+ANALYSES = {"layering": analyse_layering, "layering_by_archetype": analyse_layering_by_archetype}
 
 
 def analyse_run(run_dir, names) -> dict:

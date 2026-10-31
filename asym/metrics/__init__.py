@@ -56,6 +56,17 @@ def layering(res: SimulationResult, at: int = -1) -> dict:
     return {"mean_layer_sizes": mean, "ratios": ratios}
 
 
+def layering_by_archetype(res: SimulationResult, at: int = -1) -> dict:
+    """{archetype: mean cumulative layer sizes (4,)} over the agents of each archetype.
+
+    Agents without an archetype are grouped under ``None``.
+    """
+    agents = {a["id"]: a.get("archetype") for a in res.config.get("agents", [])}
+    groups = [agents.get(a) for a in res.agent_ids]
+    L = layer_sizes(res, at)
+    return {g: L[[k for k, gk in enumerate(groups) if gk == g]].mean(axis=0) for g in dict.fromkeys(groups)}
+
+
 # ----------------------------------------------------------------- asymmetry
 def asymmetry(res: SimulationResult, at: int = -1) -> dict:
     """Asymmetry of the dyads present at sample ``at``.

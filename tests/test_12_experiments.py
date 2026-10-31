@@ -67,3 +67,13 @@ def test_cli_runs(tmp_path, capsys):
     main(["run", str(_tiny_experiment(tmp_path)), "--out", str(tmp_path / "cli")])
     out = capsys.readouterr().out
     assert "tiny_layering" in out and "layer_sizes" in out
+
+
+def test_layering_by_archetype_analysis(tmp_path):
+    from asym.experiments import analyse_run
+    run_dir = run_experiment(_tiny_experiment(tmp_path), tmp_path / "out", analyse=False)
+    report = analyse_run(run_dir, ["layering_by_archetype"])["layering_by_archetype"]
+    groups = report["conditions"]["empty"]
+    assert set(groups) == {"butterfly", "loyal_few", "transactional", "avoidant"}
+    for g in groups.values():
+        assert len(g["layer_sizes"]) == 4 and g["layer_sizes"][0]["n"] == 3

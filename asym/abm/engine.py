@@ -73,6 +73,7 @@ class Engine:
         self.g = cfg.globals
         self.sim = cfg.simulation
         self.var = cfg.variants
+        self.explore_ties = cfg.variants["exploration"] == "ties"
         self.N = cfg.n_agents
         self.ids = cfg.agent_ids
         self.agents = cfg.agents
@@ -207,12 +208,15 @@ class Engine:
     def choose_target(self, i):
         """Target of an invitation, or None when the agent has nobody to invite.
 
-        With probability ε the target is uniform among all other agents (exploration);
-        otherwise it is drawn among existing ties with weight x^β·g(q). An agent with
+        With probability ε the target is uniform among all other agents (exploration),
+        or among the existing ties with ``variants.exploration = "ties"``; otherwise it is drawn among existing ties with weight x^β·g(q). An agent with
         no weighted tie issues nothing on the non-exploration branch.
         """
         a = self.agents[i]
         if self.rng.random() < a["epsilon"]:
+            if self.explore_ties:
+                known = list(self.out[i])
+                return known[int(self.rng.integers(len(known)))] if known else None
             j = int(self.rng.integers(self.N - 1))
             return j + 1 if j >= i else j
         candidates = list(self.out[i].items())

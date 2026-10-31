@@ -7,7 +7,7 @@ from asym import simulate, solve_meanfield
 from conftest import make_config
 
 OFF = {"surplus_boost": 0.0, "guilt": 0.0, "circle_capacity": None, "capacity_cost": 0.0, "dormant": False,
-       "revival_bonus": 0.0}
+       "revival_bonus": 0.0, "exploration": "population"}
 
 
 def _interacting(variants=None, **sim):
@@ -79,3 +79,31 @@ def test_variants_combine():
     res = simulate(_interacting(v), seed=0)
     assert res.events
     assert not res.equals(simulate(_interacting(), seed=0))
+
+
+def _explorers(scope, n=40, horizon=80.0):
+    agents = [{"id": k, "B": 3.0, "epsilon": 0.5, "nu": 0.0} for k in range(n)]
+    ties = [{"i": i, "j": (i + 1) % n, "x": 0.5} for i in range(n)] + [{"i": (i + 1) % n, "j": i, "x": 0.5} for i in range(n)]
+    return make_config(agents=agents, ties=ties, variants={"exploration": scope},
+                       globals_={"gamma": 0.5, "a0": 1.0}, simulation={"horizon": horizon, "sample_interval": 10.0})
+
+
+def test_exploration_scope_ties_creates_no_new_ties():
+    res = simulate(_explorers("ties"), seed=0)
+    assert not res.events_of("tie_created")
+    assert {e["type"] for e in res.events} >= {"invite", "accept"}
+    assert simulate(_explorers("population"), seed=0).events_of("tie_created")  # baseline: strangers are explored
+
+
+def test_exploration_scope_validated():
+    from asym.config import ConfigError, load_config
+    with pytest.raises(ConfigError):
+        load_config(make_config(variants={"exploration": "nope"}))
+
+
+def test_meanfield_exploration_scope_ties_keeps_strangers_at_zero():
+    tr = solve_meanfield(_explorers("ties", n=6, horizon=20.0))
+    x = tr.x[-1]
+    assert x[0, 3] == 0.0 and x[0, 1] > 0.0
+    tr_pop = solve_meanfield(_explorers("population", n=6, horizon=20.0))
+    assert tr_pop.accept_rate[-1][0, 3] > 0.0

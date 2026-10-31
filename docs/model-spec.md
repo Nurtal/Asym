@@ -197,6 +197,13 @@ with a bonus.
 
 An encounter creates both ties i→j and j→i with `x = x_0`, `r = o = 0`, circle 1.
 
+The encounter rate `ν_i` does not depend on N. In the baseline, though, an accepted
+exploration invitation to a stranger also creates a tie. That is a second
+tie-formation channel, and its rate grows with N, because a uniform target is more
+often a stranger. **[variant]** `exploration: ties` restricts exploration to
+existing ties, so that new ties form only through encounters, at a rate independent
+of N.
+
 **Shocks**, at global rate `Λ_s` (experimental knob):
 
 - tie shock: `x_ij ← φ · x_ij` for a random tie (φ drawn, e.g. in (0, 1))
@@ -307,6 +314,14 @@ above, they take precedence.
 - **Variants.** Guilt multiplies the invitee's x_ji by (1 − guilt) on cancellation.
   Soft capacity scales the closeness gain by 1/(1 + cost·max(0, n_c − K_c)/K_c).
   A dormant tie keeps its decayed r and o, and is revived at x0 + revival_bonus.
+  `exploration: ties` draws the ε-target uniformly among the existing ties. An agent
+  with no tie then issues nothing.
+- **Embedded dyad** (`asym.meanfield.embedded`). It is the dyad analysis inside a
+  population, because an isolated dyad always ends in friendship. Each focal agent
+  sits in a clique with M background partners (by default of its own archetype),
+  and the focal tie bridges the two cliques. The whole system of 2 + 2M agents is
+  integrated with the mean-field solver. Bistability is detected as an outcome that
+  depends on the focal start x0.
 
 ## 12. Open points
 

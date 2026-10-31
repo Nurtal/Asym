@@ -115,6 +115,9 @@ class MeanField:
         for key in ("surplus_boost", "guilt", "capacity_cost"):
             vals = [c.variants[key] for c in cfgs]
             self.var[key] = float(vals[0]) if all(v == vals[0] for v in vals) else np.array(vals, float)[:, None, None]
+        if any(c.variants["exploration"] != cfg.variants["exploration"] for c in cfgs):
+            raise ConfigError("variants.exploration must agree across a mean-field batch")
+        self.explore_ties = cfg.variants["exploration"] == "ties"
         if any(c.variants["circle_capacity"] != cfg.variants["circle_capacity"] for c in cfgs):
             raise ConfigError("variants.circle_capacity must agree across a mean-field batch")
 
@@ -153,7 +156,11 @@ class MeanField:
         wts = np.where(exists, np.where(x > 0, x, 0.0) ** self.p_beta * gq, 0.0)
         wsum = wts.sum(axis=-1, keepdims=True)
         share = np.where(wsum > 0, wts / np.where(wsum > 0, wsum, 1.0), 0.0)
-        explore = np.where(self.offdiag, 1.0 / max(self.N - 1, 1), 0.0)
+        if self.explore_ties:
+            n_ties = exists.sum(axis=-1, keepdims=True)
+            explore = np.where(exists, 1.0 / np.maximum(n_ties, 1), 0.0)
+        else:
+            explore = np.where(self.offdiag, 1.0 / max(self.N - 1, 1), 0.0)
         Iss = g["gamma"] * F[..., None] * (self.p_epsilon * explore + (1.0 - self.p_epsilon) * share)
 
         # acceptance by j of an invitation from i uses j's view of i: swap the last two axes

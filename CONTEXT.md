@@ -25,6 +25,9 @@ distinct object. A tie exists from the first encounter until it is forgotten.
 
 **Dyad** — The unordered pair {i, j}, i.e. the two ties i→j and j→i together.
 
+**Embedded dyad** — A focal dyad whose two agents each also belong to a clique of
+background partners, so the focal tie competes with other ties for the budget.
+
 **Closeness (x_ij)** — i's continuous valuation of the tie i→j, in [0, 1].
 
 **Perceived reciprocity (r_ij)** — i's decaying memory of how much j invests in the

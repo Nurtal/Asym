@@ -95,7 +95,9 @@ VARIANT_DEFAULTS: dict[str, Any] = {
     "capacity_cost": 0.0,  # strength of the soft capacity cost
     "dormant": False,  # dormant state instead of deletion
     "revival_bonus": 0.0,  # closeness bonus when a dormant tie is revived
+    "exploration": "population",  # ε-invitation targets: "population" (anyone) or "ties" (existing ties only)
 }
+EXPLORATION_SCOPES = ("population", "ties")
 
 INIT_KEYS = {"mode", "ties", "ties_path", "agents_path", "path", "density", "x_range", "base_dir"}
 SECTIONS = {"simulation", "globals", "agents", "population", "archetypes", "init", "variants", "name", "description", "_base_dir"}
@@ -242,6 +244,8 @@ def load_config(source) -> Config:
     base_dir = init.pop("base_dir", None) or base_dir or raw.get("_base_dir")
     if not 0 <= variants["guilt"] <= 1:
         raise ConfigError("variants.guilt must lie in [0, 1]")
+    if variants["exploration"] not in EXPLORATION_SCOPES:
+        raise ConfigError(f"variants.exploration must be one of {EXPLORATION_SCOPES}")
     if variants["circle_capacity"] is not None:
         K = [float(k) for k in variants["circle_capacity"]]
         if len(K) != N_CIRCLES or any(k <= 0 for k in K):

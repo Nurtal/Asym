@@ -56,7 +56,7 @@ friendships, which stay asymmetric, which break up.
   but at 0.92 and 0.88 from x0 = 0.9. Starting in the inner circle gives the slower
   inner-circle decay. The hysteresis band then keeps the tie there, even though it
   would not have climbed in from below: for loyal_few, promotion needs
-  x ≥ 0.8 + w = 0.95, while demotion only happens below 0.65. The dyad thus has two
+  x ≥ 0.8 + w/2 = 0.875, while demotion only happens below 0.725. The dyad thus has two
   stable states that exist only because of the discrete circles, not because of the
   continuous flow.
 - With the calibrated archetypes, decay is slower and budgets larger, so every

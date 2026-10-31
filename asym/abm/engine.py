@@ -271,7 +271,26 @@ class Engine:
             raise NotImplementedError(kind)
 
     def check_tie(self, i, j):
-        """Circle transition / forgetting check on one tie (see housekeeping)."""
+        """Forgetting and (dwell-gated, hysteretic) circle transition of one tie."""
+        tie = self.out[i].get(j)
+        if tie is None:
+            return
+        self.advance(i, tie)
+        a = self.agents[i]
+        if tie.x < self.g["x_min"]:
+            self.forget(i, j, tie)
+            return
+        if self.t - tie.since < a["m"] - EPS:
+            return
+        new = forms.circle_transition(tie.circle, tie.x, self.g["thresholds"], a["w"])
+        if new != tie.circle:
+            kind = "promote" if new > tie.circle else "demote"
+            self.log(kind, i=i, j=j, x=tie.x, **{"from": tie.circle, "to": new})
+            tie.circle, tie.since = new, self.t
+
+    def forget(self, i, j, tie):
+        self._delete_tie(i, j)
+        self.log("forget", i=i, j=j, x=tie.x, **{"from": tie.circle})
 
     def run(self) -> SimulationResult:
         horizon = self.sim["horizon"]
@@ -315,7 +334,9 @@ class Engine:
         return self._result(sample_times, samples)
 
     def housekeeping(self):
-        """Circle transitions and forgetting on every tie (overridden by mechanisms)."""
+        """Circle transitions and forgetting on every tie."""
+        for i, j in list(self.ties):
+            self.check_tie(i, j)
 
     # ----------------------------------------------------------------- output
     def _snapshot(self):

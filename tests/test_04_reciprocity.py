@@ -14,7 +14,8 @@ def _eroding(kappa=0.0, rho_star=0.8, ell=0.0, x0=0.5):
     agents = [{"id": "a", "delta": 0.02, "kappa": kappa, "rho_star": rho_star, "ell": ell, "lam": 0.0},
               {"id": "b"}]
     ties = [{"i": "a", "j": "b", "x": x0, "r": 0.0, "o": 10.0}]
-    raw = make_config(agents=agents, ties=ties, simulation={"horizon": 20.0, "sample_interval": 0.5})
+    raw = make_config(agents=agents, ties=ties, globals_={"x_min": 0.0},
+                      simulation={"horizon": 20.0, "sample_interval": 0.5})
     return simulate(raw, seed=0).trajectory("a", "b")
 
 

@@ -85,6 +85,7 @@ SIMULATION_DEFAULTS: dict[str, Any] = {
     "check_interval": 0.25,  # housekeeping period for circle transitions / forgetting
     "ode_step": 0.05,  # max RK4 sub-step for the closeness flow
     "record_events": True,
+    "mf_step": 0.01,  # fixed RK4 step of the mean-field solver
 }
 
 VARIANT_DEFAULTS: dict[str, Any] = {
@@ -231,6 +232,8 @@ def load_config(source) -> Config:
         raise ConfigError("globals.x_min must lie in [0, thresholds[0])")
     if not 0 <= glob["c_wait"] <= 1:
         raise ConfigError("globals.c_wait must lie in [0, 1]")
+    if glob["o0"] <= 0:
+        raise ConfigError("globals.o0 must be > 0")
     if glob["d"] <= 0:
         raise ConfigError("globals.d must be > 0")
     if not 0 <= glob["eta"] <= 1:

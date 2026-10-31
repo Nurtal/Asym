@@ -22,7 +22,7 @@ def reciprocity_ratio(r, o, o0):
 
 def reciprocity_weight(q, rho_star):
     """g(q): saturating, increasing weight of perceived reciprocity, in [0, 1)."""
-    return q / (q + rho_star) if rho_star > 0 else np.ones_like(q)
+    return q / (q + rho_star)  # q > 0 because o0 > 0
 
 
 def deficit(q, rho_star):

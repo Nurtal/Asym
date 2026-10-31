@@ -41,13 +41,16 @@ def _agent(spec, table, agent_id):
 
 
 def embedded_dyad_config(a, b, n_background: int = 4, background=None, x0=(0.5, 0.5), x_bg: float = 0.5,
-                         globals_=None, archetypes=None, horizon: float = 600.0, step: float = 0.05) -> dict:
+                         globals_=None, archetypes=None, horizon: float = 600.0, step: float = 0.05,
+                         variants=None) -> dict:
     """Raw config of an embedded dyad.
 
     ``a`` and ``b`` are archetype names or agent dicts. ``background`` is the archetype
     (or agent dict) of the background partners, or a pair ``(for_a, for_b)``; by
     default each focal agent's partners share its archetype. Background ties start at
     ``x_bg``, the focal ties at ``x0``; every tie starts with r = o = 1.
+    ``variants`` defaults to ``{"exploration": "ties"}`` so that exploration cannot
+    create ties outside the two cliques (the topology stays fixed).
     """
     if n_background < 0:
         raise ConfigError("n_background must be >= 0")
@@ -71,6 +74,7 @@ def embedded_dyad_config(a, b, n_background: int = 4, background=None, x0=(0.5, 
         "agents": agents,
         "globals": dict(globals_ or {}),
         "init": {"mode": "file", "ties": ties},
+        "variants": dict({"exploration": "ties"}, **(variants or {})),
         "simulation": {"horizon": float(horizon), "burn_in": 0.0, "sample_interval": float(horizon), "mf_step": step},
     }
 

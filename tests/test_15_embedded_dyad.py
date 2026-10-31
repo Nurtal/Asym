@@ -19,12 +19,20 @@ def test_config_structure():
     assert len(ties) == 2 + 2 * 4 * 3  # focal pair + two directed 4-cliques
     assert ties[("A", "B")] == 0.2 and ties[("B", "A")] == 0.7 and ties[("a1", "a3")] == 0.4
     assert ("a1", "b1") not in ties and ("A", "b1") not in ties
+    assert cfg.variants["exploration"] == "ties"
+
+
+def test_topology_stays_fixed():
+    from asym.meanfield.solver import solve_meanfield
+    raw = embedded_dyad_config("butterfly", "butterfly", n_background=2, globals_=G, horizon=100.0)
+    X = solve_meanfield(raw, occupancy="exponential").x[-1]
+    assert X[2, 4] == 0.0 and X[0, 4] == 0.0  # a1–b1 and A–b1 never form
 
 
 def test_no_background_reduces_to_isolated_dyad():
     iso = archetype_pairs(["loyal_few", "transactional"], x0=(0.5, 0.5), horizon=300.0, globals_=G)
     emb = embedded_outcome("loyal_few", "transactional", starts=[(0.5, 0.5)], n_background=0, globals_=G,
-                           horizon=300.0)[0]
+                           horizon=300.0, variants={"exploration": "population"})[0]
     ref = iso[("loyal_few", "transactional")]
     assert emb["x_ab"] == pytest.approx(ref["x_ab"], abs=1e-9) and emb["x_ba"] == pytest.approx(ref["x_ba"], abs=1e-9)
 

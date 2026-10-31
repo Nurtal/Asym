@@ -22,6 +22,34 @@ class SimulationResult:
     capacity: np.ndarray  # (S, N) effective budget B_i (reduced during budget shocks)
     events: list = field(default_factory=list)  # dicts: {"t", "type", ...}
 
+    @classmethod
+    def build(cls, agent_ids, times, rows, budget=None, pending_budget=None, capacity=None, events=None,
+              config=None, seed=0):
+        """Assemble a result by hand from rows ``(t, i, j, x, r, o, circle)`` (agent ids or indices)."""
+        ids = list(agent_ids)
+        idx = {a: k for k, a in enumerate(ids)}
+        conv = lambda a: idx[a] if a in idx else int(a)  # noqa: E731
+        rows = list(rows)
+        cols = list(zip(*rows)) if rows else [[]] * 7
+        ties = {
+            "t": np.array(cols[0], dtype=float), "i": np.array([conv(a) for a in cols[1]], dtype=np.int32),
+            "j": np.array([conv(a) for a in cols[2]], dtype=np.int32), "x": np.array(cols[3], dtype=float),
+            "r": np.array(cols[4], dtype=float), "o": np.array(cols[5], dtype=float),
+            "circle": np.array(cols[6], dtype=np.int8),
+        }
+        times = np.asarray(times, dtype=float)
+        shape = (len(times), len(ids))
+        zero = np.zeros(shape)
+        return cls(config=config or {}, seed=seed, agent_ids=ids, times=times, ties=ties,
+                   budget=zero if budget is None else np.asarray(budget, float),
+                   pending_budget=zero.copy() if pending_budget is None else np.asarray(pending_budget, float),
+                   capacity=np.ones(shape) if capacity is None else np.asarray(capacity, float),
+                   events=list(events or []))
+
+    @property
+    def burn_in(self) -> float:
+        return float(self.config.get("simulation", {}).get("burn_in", self.times[0] if len(self.times) else 0.0))
+
     # ------------------------------------------------------------------ queries
     def index(self, agent_id) -> int:
         return self.agent_ids.index(agent_id)

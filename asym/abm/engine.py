@@ -89,6 +89,8 @@ class Engine:
         tie = Tie(float(x), float(r), float(o), int(circle), self.t, self.t)
         self.ties[(i, j)] = tie
         self.out[i][j] = tie
+        if log:
+            self.log("tie_created", i=i, j=j, x=tie.x)
         return tie
 
     def _delete_tie(self, i, j):

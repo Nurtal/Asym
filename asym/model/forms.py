@@ -119,3 +119,15 @@ def circle_transition(circle, x, thresholds, w):
     if circle > 1 and x < thresholds[circle - 2] - 0.5 * w:
         return circle - 1
     return circle
+
+
+def circle_transition_array(circle, x, thresholds, w):
+    """Vectorised ``circle_transition`` (same rule) for integer circle arrays (0 = no tie)."""
+    th = np.concatenate([[-np.inf], np.asarray(thresholds, dtype=float), [np.inf]])  # th[c] = lower bound of c+1
+    c = np.asarray(circle)
+    up = th[np.clip(c, 0, len(th) - 1)]  # lower bound of circle c+1 (= th[c])
+    down = th[np.clip(c - 1, 0, len(th) - 1)]  # lower bound of circle c (= th[c-1])
+    exists = c > 0
+    promote = exists & (c < len(thresholds) + 1) & (x >= up + 0.5 * w)
+    demote = exists & ~promote & (c > 1) & (x < down - 0.5 * w)
+    return np.where(promote, c + 1, np.where(demote, c - 1, c))

@@ -67,6 +67,48 @@ def layering_by_archetype(res: SimulationResult, at: int = -1) -> dict:
     return {g: L[[k for k, gk in enumerate(groups) if gk == g]].mean(axis=0) for g in dict.fromkeys(groups)}
 
 
+def dyad_switching(res: SimulationResult, i, j, low: float, high: float) -> dict:
+    """Two-state (hysteretic) reading of a dyad's sampled closeness, and its switches.
+
+    The dyad closeness is the mean of x_ij and x_ji, with a missing tie counted as 0.
+    The state is ``high`` once the closeness reaches ``high``, and ``low`` once it
+    falls to ``low`` or below. In between, the previous state is kept (``mid`` before
+    either band is reached). ``broken`` means both ties are gone; it is absorbing in a
+    population without encounters, but a later sample can leave it if the ties
+    reform. Returns {"t", "closeness", "state", "switches": [(t, from, to)],
+    "breakup_time", "final"}.
+    """
+    ii, jj = res.index(i), res.index(j)
+    T = len(res.times)
+    tidx = {t: k for k, t in enumerate(res.times)}
+    xij, xji = np.zeros(T), np.zeros(T)
+    present = np.zeros(T, dtype=bool)
+    for a, b, arr in ((ii, jj, xij), (jj, ii, xji)):
+        m = (res.ties["i"] == a) & (res.ties["j"] == b)
+        for t, x in zip(res.ties["t"][m], res.ties["x"][m]):
+            arr[tidx[t]] = x
+            present[tidx[t]] = True
+    closeness = 0.5 * (xij + xji)
+    states, switches, cur = [], [], "mid"
+    for k in range(T):
+        if not present[k]:
+            new = "broken"
+        elif closeness[k] >= high:
+            new = "high"
+        elif closeness[k] <= low:
+            new = "low"
+        else:
+            new = cur if cur != "broken" else "mid"
+        if new != cur and k > 0:
+            switches.append((float(res.times[k]), cur, new))
+        cur = new
+        states.append(cur)
+    broken = [float(res.times[k]) for k in range(T) if not present[k]]
+    return {"t": res.times.copy(), "closeness": closeness, "state": np.array(states, dtype=object),
+            "switches": switches, "breakup_time": broken[0] if broken else None,
+            "final": states[-1] if states else None}
+
+
 # ----------------------------------------------------------------- asymmetry
 def asymmetry(res: SimulationResult, at: int = -1) -> dict:
     """Asymmetry of the dyads present at sample ``at``.

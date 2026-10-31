@@ -126,3 +126,24 @@ def test_layering_by_archetype():
     np.testing.assert_allclose(by["x"], [0.5, 1.0, 1.0, 1.5])  # a: [1,2,2,2], c: [0,0,0,1]
     np.testing.assert_allclose(by["y"], [1, 1, 1, 1])
     np.testing.assert_allclose(by[None], [0, 0, 0, 0])
+
+
+def test_dyad_switching():
+    # dyad closeness (mean of both directions): 0.8, 0.6 (stays high), 0.1 (low), 0.3 (stays low), 0.7 (high), gone
+    xs = [(0.8, 0.8), (0.7, 0.5), (0.1, 0.1), (0.3, 0.3), (0.7, 0.7), None]
+    rows = []
+    for t, v in enumerate(xs):
+        if v is not None:
+            rows += [(float(t), "a", "b", v[0], 0, 0, 1), (float(t), "b", "a", v[1], 0, 0, 1)]
+    res = SimulationResult.build(IDS, [float(t) for t in range(len(xs))], rows)
+    sw = M.dyad_switching(res, "a", "b", low=0.2, high=0.5)
+    np.testing.assert_allclose(sw["closeness"], [0.8, 0.6, 0.1, 0.3, 0.7, 0.0])
+    assert list(sw["state"]) == ["high", "high", "low", "low", "high", "broken"]
+    assert sw["switches"] == [(2.0, "high", "low"), (4.0, "low", "high"), (5.0, "high", "broken")]
+    assert sw["breakup_time"] == 5.0 and sw["final"] == "broken"
+    # undecided start (between the bands) is "mid" until a band is reached
+    rows2 = [(0.0, "a", "b", 0.3, 0, 0, 1), (0.0, "b", "a", 0.3, 0, 0, 1),
+             (1.0, "a", "b", 0.6, 0, 0, 1), (1.0, "b", "a", 0.6, 0, 0, 1)]
+    sw2 = M.dyad_switching(SimulationResult.build(IDS, [0.0, 1.0], rows2), "a", "b", low=0.2, high=0.5)
+    assert list(sw2["state"]) == ["mid", "high"] and sw2["switches"] == [(1.0, "mid", "high")]
+    assert sw2["breakup_time"] is None

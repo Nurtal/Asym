@@ -63,6 +63,9 @@ class Engine:
         self._inv_seq = 0
         self.tau = np.array([a["tau"] for a in self.agents], dtype=float)
         self.nu = np.array([a["nu"] for a in self.agents], dtype=float)
+        self.B0 = self.B.copy()  # nominal budgets
+        self.budget_shocks: list[dict[int, float]] = [dict() for _ in range(self.N)]
+        self._shock_seq = 0
         self.total_nu = float(self.nu.sum())
 
         for (i, j), vals in initial_ties(cfg, self.rng).items():
@@ -128,6 +131,9 @@ class Engine:
         if total_issue > 0:
             bounds.append(total_issue)
             handlers.append(lambda w=issue, tot=total_issue: self.issue(_pick(self.rng, w, tot)))
+        if g["shock_rate"] > 0:
+            bounds.append(g["shock_rate"])
+            handlers.append(self.shock)
         if self.total_nu > 0 and self.N > 1:
             bounds.append(self.total_nu)
             handlers.append(lambda: self.encounter(_pick(self.rng, self.nu, self.total_nu)))
@@ -182,7 +188,7 @@ class Engine:
         cw = self.g["c_wait"]
         self.U[i] += cw
         self.U_pending[i] += cw
-        self.log("invite", i=i, j=j, inv=inv.id)
+        self.log("invite", i=i, j=j, inv=inv.id, U_i=self.U[i], B_i=self.B[i])
 
     def _release_pending(self, inv):
         del self.pending[inv.id]
@@ -271,7 +277,8 @@ class Engine:
             tie.x = forms.interaction_jump(tie.x, g["eta"])
             tie.o += g["inv_unit"]
             tie.r += self._perceived(u)
-        self.log(kind, i=i, j=j, inv=inv.id, wait=self.t - inv.t_issue)
+        self.log(kind, i=i, j=j, inv=inv.id, wait=self.t - inv.t_issue,
+                 U_i=self.U[i], B_i=self.B[i], U_j=self.U[j], B_j=self.B[j])
         self.check_tie(i, j)
         self.check_tie(j, i)
 
@@ -314,12 +321,44 @@ class Engine:
         else:
             self.log("encounter", i=i, j=j, kind=kind, via=self.ids[via])
 
+    # ----------------------------------------------------------------- shocks
+    def shock(self):
+        g = self.g
+        if self.rng.random() < g["shock_tie_prob"]:
+            if not self.ties:
+                return
+            keys = list(self.ties)
+            i, j = keys[int(self.rng.integers(len(keys)))]
+            tie = self.advance(i, self.ties[(i, j)])
+            phi = float(self.rng.uniform(*g["shock_phi"]))
+            before = tie.x
+            tie.x = phi * before
+            self.log("shock_tie", i=i, j=j, phi=phi, x_before=before, x_after=tie.x)
+            self.check_tie(i, j)
+        else:
+            i = int(self.rng.integers(self.N))
+            phi = float(self.rng.uniform(*g["shock_budget_phi"]))
+            duration = float(self.rng.exponential(g["shock_budget_duration"]))
+            self._shock_seq += 1
+            self.budget_shocks[i][self._shock_seq] = phi
+            self._update_capacity(i)
+            self.schedule(self.t + duration, "budget_restore", (i, self._shock_seq))
+            self.log("shock_budget", i=i, phi=phi, duration=duration, B_i=self.B[i])
+
+    def _update_capacity(self, i):
+        self.B[i] = self.B0[i] * float(np.prod(list(self.budget_shocks[i].values()))) if self.budget_shocks[i] else self.B0[i]
+
     def handle_scheduled(self, kind, payload):
         if kind == "interaction_end":
             i, j = payload
             self.U[i] -= 1.0
             self.U[j] -= 1.0
             self.log("interaction_end", i=i, j=j)
+        elif kind == "budget_restore":
+            i, sid = payload
+            del self.budget_shocks[i][sid]
+            self._update_capacity(i)
+            self.log("budget_restore", i=i, B_i=self.B[i], active=len(self.budget_shocks[i]))
         else:
             raise NotImplementedError(kind)
 

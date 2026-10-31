@@ -178,13 +178,23 @@ Each section lists what goes in it, which experiment supports it, and its status
   pairs; the symmetric neighbourhood is unstable. **Needs the population-level
   check** before it can be claimed beyond cliques (❌).
 
-### 7 Results III: asymmetry (≈ 1 page) 🟡
-- ρ* drives one-sided ties (Morris). The transactional side is always the less
-  close one (exp 03, 04, 07).
-- **Missing:** a dedicated population-level result, i.e. the distribution of
-  |x_ij − x_ji| and of one-sided ties by archetype pair, compared with the ~50%
-  unreciprocated nominations of Almaatouq et al. Without it the claim is close to
-  "true by construction".
+### 7 Results III: asymmetry (≈ 1.5 pages) ✅
+- Source: exp 12. **Fig. 9** (❌): the unreciprocated share per counterfactual, plus
+  a heatmap of the unreciprocated share by ordered archetype pair.
+- **About 24–28% of friendship nominations are unreciprocated.** They are
+  concentrated on nominations of partners with high reciprocity expectations
+  (butterfly → transactional 0.63–0.71) or fast-eroding ties (butterfly →
+  avoidant 0.53).
+- Counterfactuals:
+  - removing the expectation gap halves the share (0.276 → 0.122);
+  - removing the decay gap lowers it to 0.182, on different pairs;
+  - removing the allocation mismatch has a minor, mixed effect (0.222);
+  - the individual-noise floor is 0.067.
+- Comparison with Almaatouq et al. 2016 (about 0.5): the direction and order of
+  magnitude agree. The model makes a *pair-level* prediction: who is left
+  unreciprocated.
+- Follow-up: the misperception condition is confounded (perception mean > 1), so
+  it needs a mean-preserving rerun.
 
 ### 8 Discussion (≈ 2 pages)
 - What a dynamical model adds to Tamarit:
@@ -222,7 +232,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 
 | # | Item | Why | Cost |
 |---|---|---|---|
-| 1 | **Asymmetry at population level** (§7) | Claim C6 is otherwise "true by construction"; one of the five contributions | 1 experiment, about 1 h of compute |
+| 1 | ~~Asymmetry at population level~~ ✅ done (exp 12); a mean-preserving misperception rerun is still open | | |
 | 2 | **Mean-field derivation of the B/δ collapse** (§5.2) | Gives the paper its analytical result and explains the η deviation | analytical work plus a check |
 | 3 | **Seeds and populations** | Reviewers expect many more than 3–5 seeds; claims at small N need population draws | rerun exp 06, 07 and 11 with more seeds, a few hours |
 | 4 | **Figures 1–8** | none exist yet; all the data does | plotting script per figure |

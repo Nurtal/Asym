@@ -38,7 +38,7 @@ def test_committed_budget_never_exceeds_capacity(seed):
 
 
 def test_fully_committed_agent_issues_no_invitation():
-    raw = make_config(agents=[{"id": "a", "B": 1.0}, {"id": "b", "B": 1.0}],
+    raw = make_config(agents=[{"id": "a", "B": 1.5}, {"id": "b", "B": 1.5}],
                       globals_={**ALWAYS_ACCEPT, "d": 1000.0}, simulation={"horizon": 50.0})
     res = simulate(raw, seed=3)
     accepts = res.events_of("accept")

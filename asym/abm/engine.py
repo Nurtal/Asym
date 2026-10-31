@@ -127,10 +127,19 @@ class Engine:
             bounds.append(total_issue)
             handlers.append(lambda w=issue, tot=total_issue: self.issue(_pick(self.rng, w, tot)))
         if self.pending:
-            new = [inv for inv in self.pending.values() if not inv.silent]
+            invs = list(self.pending.values())
+            new = [inv for inv in invs if not inv.silent]
+            silent = [inv for inv in invs if inv.silent]
             if new and g["omega"] > 0:
                 bounds.append(g["omega"] * len(new))
                 handlers.append(lambda new=new: self.respond(new[int(self.rng.integers(len(new)))]))
+            if silent and g["zeta"] > 0:
+                bounds.append(g["zeta"] * len(silent))
+                handlers.append(lambda silent=silent: self.late_response(silent[int(self.rng.integers(len(silent)))]))
+            cancel = [1.0 / self.tau[inv.i] for inv in invs]
+            total_cancel = float(sum(cancel))
+            bounds.append(total_cancel)
+            handlers.append(lambda invs=invs, w=cancel, tot=total_cancel: self.maybe_cancel(invs[_pick(self.rng, w, tot)]))
         return bounds, handlers
 
     # ------------------------------------------------------------ invitations
@@ -189,8 +198,42 @@ class Engine:
             self.not_accepted(inv)
 
     def not_accepted(self, inv):
+        if self.rng.random() < self.agents[inv.j]["alpha"]:
+            inv.silent = True
+            self.log("silence", i=inv.i, j=inv.j, inv=inv.id)
+            return
         self._release_pending(inv)
+        tie = self.out[inv.i].get(inv.j)
+        if tie is not None:
+            self.advance(inv.i, tie)
+            tie.o += self.g["c_rej"] * self.g["inv_unit"]
         self.log("decline", i=inv.i, j=inv.j, inv=inv.id)
+
+    def late_response(self, inv):
+        # thinning: true rate ζ·P_acc against bound ζ
+        if self.rng.random() < self.acceptance(inv):
+            self.accept(inv, "late_accept")
+
+    def maybe_cancel(self, inv):
+        i, j, g = inv.i, inv.j, self.g
+        tie = self.out[i].get(j)
+        x = self.advance(i, tie).x if tie is not None else 0.0
+        # thinning: true hazard 1/(τ(1+h1·x)) against bound 1/τ
+        if self.rng.random() >= 1.0 / (1.0 + g["h1"] * x):
+            return
+        self._release_pending(inv)
+        wait = self.t - inv.t_issue
+        dr = 0.0
+        if tie is not None:
+            r_new = float(forms.cancellation_drop(tie.r, g["psi"], self.agents[i]["ell"], tie.x, wait))
+            dr, tie.r = tie.r - r_new, r_new
+        self.log("cancel", i=i, j=j, inv=inv.id, wait=wait, dr=dr)
+        self.on_cancel(inv)
+        if tie is not None:
+            self.check_tie(i, j)
+
+    def on_cancel(self, inv):
+        """Hook for the invitee-side effect of a cancellation (guilt variant)."""
 
     def _ensure_tie(self, i, j):
         tie = self.out[i].get(j)

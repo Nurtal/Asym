@@ -77,3 +77,13 @@ def test_layering_by_archetype_analysis(tmp_path):
     assert set(groups) == {"butterfly", "loyal_few", "transactional", "avoidant"}
     for g in groups.values():
         assert len(g["layer_sizes"]) == 4 and g["layer_sizes"][0]["n"] == 3
+
+
+def test_layer_regime_analysis(tmp_path):
+    from asym.experiments import analyse_run
+    run_dir = run_experiment(_tiny_experiment(tmp_path), tmp_path / "out", analyse=False)
+    rep = analyse_run(run_dir, ["layer_regime"])["layer_regime"]["conditions"]["empty"]
+    assert len(rep["layer_counts"]) == 4 and rep["layer_counts"][0]["n"] == 3
+    assert set(rep) >= {"layer_counts", "mu", "inverse_fraction", "by_archetype"}
+    assert 0.0 <= rep["inverse_fraction"]["mean"] <= 1.0
+    assert set(rep["by_archetype"]) == {"butterfly", "loyal_few", "transactional", "avoidant"}

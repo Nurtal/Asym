@@ -218,7 +218,48 @@ def analyse_layering_by_archetype(runs: dict) -> dict:
     return report
 
 
-ANALYSES = {"layering": analyse_layering, "layering_by_archetype": analyse_layering_by_archetype}
+def _agent_counts(res: SimulationResult) -> np.ndarray:
+    """(N, 4) time-averaged non-cumulative circle sizes, inner circle first."""
+    if len(res.times) == 0:
+        return np.full((len(res.agent_ids), 4), math.nan)
+    return np.mean([metrics.circle_sizes(res, at=k)[:, ::-1] for k in range(len(res.times))], axis=0)
+
+
+def analyse_layer_regime(runs: dict) -> dict:
+    """Tamarit et al.'s regimes: non-cumulative layer populations and the exponent μ.
+
+    Per condition: mean layer counts (inner first), μ fitted to the population-mean
+    counts of each run, the fraction of agents whose own counts give μ < 0 (inverse
+    regime), and μ per archetype; all with 95% CIs over seeds.
+    """
+    report = {"conditions": {}}
+    for c, rs in runs.items():
+        counts, mus, inv, by = [], [], [], {}
+        for r in rs:
+            A = _agent_counts(r)
+            mean = A.mean(axis=0)
+            counts.append(mean)
+            mus.append(metrics.layer_exponent(mean))
+            agent_mu = np.array([metrics.layer_exponent(a) for a in A])
+            ok = np.isfinite(agent_mu)
+            inv.append(float(np.mean(agent_mu[ok] < 0)) if ok.any() else math.nan)
+            arch = {a["id"]: a.get("archetype") for a in r.config.get("agents", [])}
+            groups = [arch.get(a) for a in r.agent_ids]
+            for g in dict.fromkeys(groups):
+                rows = A[[k for k, gk in enumerate(groups) if gk == g]]
+                by.setdefault(str(g), []).append(metrics.layer_exponent(rows.mean(axis=0)))
+        counts = np.array(counts)
+        report["conditions"][c] = {
+            "layer_counts": [_ci(counts[:, k]) for k in range(4)],
+            "mu": _ci([m for m in mus if np.isfinite(m)]),
+            "inverse_fraction": _ci([v for v in inv if np.isfinite(v)]),
+            "by_archetype": {g: {"mu": _ci([m for m in v if np.isfinite(m)])} for g, v in by.items()},
+        }
+    return report
+
+
+ANALYSES = {"layering": analyse_layering, "layering_by_archetype": analyse_layering_by_archetype,
+            "layer_regime": analyse_layer_regime}
 
 
 def analyse_run(run_dir, names) -> dict:

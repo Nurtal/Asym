@@ -147,3 +147,13 @@ def test_dyad_switching():
     sw2 = M.dyad_switching(SimulationResult.build(IDS, [0.0, 1.0], rows2), "a", "b", low=0.2, high=0.5)
     assert list(sw2["state"]) == ["mid", "high"] and sw2["switches"] == [(1.0, "mid", "high")]
     assert sw2["breakup_time"] is None
+
+
+def test_layer_exponent():
+    # non-cumulative sizes from the inner circle outwards; cost of layer k (inner = 4 … outer = 1)
+    normal = [1.0, 3.0, 9.0, 27.0]  # n ∝ 3^(−cost) → μ = ln 3
+    assert M.layer_exponent(normal) == pytest.approx(math.log(3))
+    assert M.layer_exponent(normal[::-1]) == pytest.approx(-math.log(3))  # inverse regime
+    assert math.isnan(M.layer_exponent([0.0, 0.0, 0.0, 5.0]))  # fewer than two populated layers
+    # zero layers are skipped
+    assert M.layer_exponent([0.0, 3.0, 9.0, 27.0]) == pytest.approx(math.log(3))

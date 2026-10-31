@@ -47,6 +47,25 @@ def layer_sizes(res: SimulationResult, at: int = -1) -> np.ndarray:
     return np.cumsum(circle_sizes(res, at)[:, ::-1], axis=1)
 
 
+def layer_exponent(sizes) -> float:
+    """Exponent μ of n_k ∝ exp(−μ·c_k), fitted by least squares on log n_k.
+
+    ``sizes`` are non-cumulative layer populations from the inner circle outwards. The
+    cost c_k is 4 for the inner circle, down to 1 for acquaintances, following the
+    cost ordering of Tamarit et al. (2018). μ > 0 is the usual regime, with populations
+    growing outwards. μ < 0 is their *inverse regime*, with the inner layers the most
+    populated. Empty layers are skipped; with fewer than two populated layers the
+    result is NaN.
+    """
+    n = np.asarray(sizes, dtype=float)
+    cost = np.arange(len(n), 0, -1, dtype=float)
+    keep = n > 0
+    if keep.sum() < 2:
+        return math.nan
+    slope = np.polyfit(cost[keep], np.log(n[keep]), 1)[0]
+    return float(-slope)
+
+
 def layering(res: SimulationResult, at: int = -1) -> dict:
     """Mean cumulative layer sizes and the ratios between consecutive layers."""
     L = layer_sizes(res, at)

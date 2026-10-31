@@ -73,3 +73,7 @@ cannot produce breakups. Ways to provide it:
 - an external-load term in the dyad reduction
 
 Either is a modelling decision still to make.
+
+**Resolved:** the embedded-dyad option was chosen (focal dyad plus a clique of
+background partners per agent, in the mean-field). See
+`docs/experiments/04-embedded-dyad-pairs.md`.

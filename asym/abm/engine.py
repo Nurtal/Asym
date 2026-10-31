@@ -60,6 +60,7 @@ class Engine:
         self._seq = 0
         self.t = 0.0
         self.pending: dict[int, Invitation] = {}
+        self.dormant: dict[tuple[int, int], tuple[float, float, float]] = {}
         self._inv_seq = 0
         self.tau = np.array([a["tau"] for a in self.agents], dtype=float)
         self.nu = np.array([a["nu"] for a in self.agents], dtype=float)
@@ -255,13 +256,45 @@ class Engine:
             self.check_tie(i, j)
 
     def on_cancel(self, inv):
-        """Hook for the invitee-side effect of a cancellation (guilt variant)."""
+        """Guilt variant: the invitee's closeness to the inviter drops by a factor (1 − guilt)."""
+        guilt = self.var["guilt"]
+        if not guilt:
+            return
+        tie = self.out[inv.j].get(inv.i)
+        if tie is None:
+            return
+        self.advance(inv.j, tie)
+        before = tie.x
+        tie.x *= 1.0 - guilt
+        self.log("guilt", i=inv.j, j=inv.i, x_before=before, x_after=tie.x)
+        self.check_tie(inv.j, inv.i)
+
+    def new_tie(self, i, j):
+        """Create the tie i→j at first contact, or revive it from dormancy (variant)."""
+        d = self.dormant.pop((i, j), None)
+        if d is None:
+            return self._create_tie(i, j, self.g["x0"])
+        r, o, t0 = d
+        decay = math.exp(-self.agents[i]["lam"] * (self.t - t0))
+        x = min(1.0, self.g["x0"] + self.var["revival_bonus"])
+        tie = self._create_tie(i, j, x, r * decay, o * decay, log=False)
+        self.log("revive", i=i, j=j, x=x, dormant_for=self.t - t0)
+        return tie
 
     def _ensure_tie(self, i, j):
         tie = self.out[i].get(j)
         if tie is None:
-            tie = self._create_tie(i, j, self.g["x0"])
+            tie = self.new_tie(i, j)
         return self.advance(i, tie)
+
+    def _gain(self, i, tie) -> float:
+        """η, reduced by the soft circle-capacity variant when the tie's circle is over target."""
+        eta = self.g["eta"]
+        K = self.var["circle_capacity"]
+        if K is None or not self.var["capacity_cost"]:
+            return eta
+        n_c = sum(1 for t in self.out[i].values() if t.circle == tie.circle)
+        return eta * float(forms.capacity_factor(n_c, K[tie.circle - 1], self.var["capacity_cost"]))
 
     def _perceived(self, i) -> float:
         a, g = self.agents[i], self.g
@@ -276,7 +309,7 @@ class Engine:
         self.schedule(self.t + g["d"], "interaction_end", (i, j))
         for u, v in ((i, j), (j, i)):
             tie = self._ensure_tie(u, v)
-            tie.x = forms.interaction_jump(tie.x, g["eta"])
+            tie.x = forms.interaction_jump(tie.x, self._gain(u, tie))
             tie.o += g["inv_unit"]
             tie.r += self._perceived(u)
         self.log(kind, i=i, j=j, inv=inv.id, wait=self.t - inv.t_issue,
@@ -317,7 +350,7 @@ class Engine:
             j = second[_pick(self.rng, w2, sum(w2))][0]
         for u, v in ((i, j), (j, i)):
             if v not in self.out[u]:
-                self._create_tie(u, v, g["x0"])
+                self.new_tie(u, v)
         if via is None:
             self.log("encounter", i=i, j=j, kind=kind)
         else:
@@ -384,7 +417,11 @@ class Engine:
 
     def forget(self, i, j, tie):
         self._delete_tie(i, j)
-        self.log("forget", i=i, j=j, x=tie.x, **{"from": tie.circle})
+        if self.var["dormant"]:
+            self.dormant[(i, j)] = (tie.r, tie.o, self.t)
+            self.log("forget", i=i, j=j, x=tie.x, dormant=True, **{"from": tie.circle})
+        else:
+            self.log("forget", i=i, j=j, x=tie.x, **{"from": tie.circle})
 
     def run(self) -> SimulationResult:
         horizon = self.sim["horizon"]

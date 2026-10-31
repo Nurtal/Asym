@@ -64,6 +64,8 @@ class MeanField:
         self.N = N = cfg.n_agents
         if g["shock_rate"] > 0 or any(a["nu"] > 0 for a in A):
             warnings.warn("mean-field solver ignores encounters (nu) and shocks", stacklevel=3)
+        if cfg.variants["dormant"]:
+            warnings.warn("mean-field solver ignores the dormant variant (forgotten ties are deleted)", stacklevel=3)
         col = lambda k: np.array([a[k] for a in A], dtype=float)[:, None]  # noqa: E731  (per inviter i, broadcast over j)
         self.B, self.beta, self.eps = col("B")[:, 0], col("beta"), col("epsilon")
         self.kappa, self.ell, self.rho, self.lam = col("kappa"), col("ell"), col("rho_star"), col("lam")
@@ -128,8 +130,17 @@ class MeanField:
         dWs = Ps + g["omega"] * (1.0 - P) * self.alpha_j * Wu - (g["zeta"] * P + c) * Ws
 
         delta_c = self._delta_c()
-        dx = g["eta"] * (1.0 - x) * A + forms.closeness_drift(
+        eta = g["eta"]
+        K, cost = self.var["circle_capacity"], self.var["capacity_cost"]
+        if K is not None and cost:
+            counts = np.stack([(self.circle == c).sum(axis=1) for c in range(1, 5)], axis=1)  # (N, 4)
+            ci = np.clip(self.circle, 1, 4) - 1
+            n_c = np.take_along_axis(counts, ci, axis=1)
+            eta = eta * forms.capacity_factor(n_c, np.asarray(K)[ci], cost)
+        dx = eta * (1.0 - x) * A + forms.closeness_drift(
             x, q, delta_c, self.kappa, self.ell, self.rho, self.var["surplus_boost"])
+        if self.var["guilt"]:
+            dx = dx - self.var["guilt"] * x * (c * (Pu + Ps)).T  # cancellations of i→j hit x_ji
         dr = A * self.perc - self.lam * r - g["psi"] * (1.0 - self.ell * x) * c * (Wu + Ws)
         do = A * g["inv_unit"] + g["c_rej"] * g["inv_unit"] * dec * exists - self.lam * o
         d = np.stack([dx, dr, do, dPu, dPs, dWu, dWs])

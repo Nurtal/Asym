@@ -74,6 +74,15 @@ def interaction_jump(x, eta):
     return x + eta * (1.0 - x)
 
 
+def capacity_factor(n_in_circle, target, cost):
+    """Soft circle-capacity variant: closeness gains shrink when a circle is over its target.
+
+    The factor is 1 / (1 + cost · max(0, n − K) / K).
+    """
+    excess = np.maximum(0.0, n_in_circle - target) / target
+    return 1.0 / (1.0 + cost * excess)
+
+
 def acceptance_probability(x_ji, g_ji, load_j, a0, a, b, c):
     """P_acc = σ(a0 + a·x_ji + b·g(q_ji) − c·U_j/B_j)."""
     return sigmoid(a0 + a * x_ji + b * g_ji - c * load_j)

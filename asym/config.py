@@ -90,7 +90,7 @@ SIMULATION_DEFAULTS: dict[str, Any] = {
 
 VARIANT_DEFAULTS: dict[str, Any] = {
     "surplus_boost": 0.0,  # μ_s; 0 = baseline (surplus neutral)
-    "guilt": 0.0,  # closeness drop of the invitee when an invitation to it is cancelled
+    "guilt": 0.0,  # factor of the invitee's closeness drop when an invitation to it is cancelled
     "circle_capacity": None,  # list of K_c targets per circle, or None
     "capacity_cost": 0.0,  # strength of the soft capacity cost
     "dormant": False,  # dormant state instead of deletion
@@ -240,6 +240,13 @@ def load_config(source) -> Config:
         raise ConfigError("globals.eta must lie in [0, 1]")
 
     base_dir = init.pop("base_dir", None) or base_dir or raw.get("_base_dir")
+    if not 0 <= variants["guilt"] <= 1:
+        raise ConfigError("variants.guilt must lie in [0, 1]")
+    if variants["circle_capacity"] is not None:
+        K = [float(k) for k in variants["circle_capacity"]]
+        if len(K) != N_CIRCLES or any(k <= 0 for k in K):
+            raise ConfigError(f"variants.circle_capacity must be {N_CIRCLES} positive targets")
+        variants["circle_capacity"] = K
     agents = _resolve_agents(raw, init, base_dir)
     if base_dir is not None:
         init["base_dir"] = str(base_dir)

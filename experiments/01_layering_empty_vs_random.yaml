@@ -1,0 +1,28 @@
+name: layering_empty_vs_random
+description: >
+  Research question 2 (emergent Dunbar-like layering) with its robustness check.
+  A mixed-archetype population with no imposed circle capacity is started either
+  from nobody knowing anybody (empty) or from a random acquaintance network (random).
+  If the steady-state cumulative layer sizes do not depend on the starting point,
+  the layered structure is an attractor of the dynamics.
+base:
+  population:
+    composition: {butterfly: 0.25, loyal_few: 0.25, transactional: 0.25, avoidant: 0.25}
+    size: 200
+    noise: 0.15
+    seed: 0
+  globals:
+    gamma: 0.5
+    a0: 0.5
+  simulation:
+    horizon: 300.0
+    burn_in: 150.0
+    sample_interval: 10.0
+    record_events: false
+seeds: {range: [0, 10]}
+conditions:
+  empty:
+    init: {mode: empty}
+  random:
+    init: {mode: random, density: 0.05, x_range: [0.1, 0.5]}
+analysis: [layering]

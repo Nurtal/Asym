@@ -42,3 +42,32 @@ Mean ratios between consecutive layers: empty 3.7 / 2.1 / 8.7, random 4.2 / 2.3 
   (≈4, 2, 9) do not show the constant ≈3 scaling. With the default calibration,
   budgets (B ≈ 4–8 slots) are too small and decay too fast to sustain many close
   ties. Calibration is an open point in the model spec (§12).
+
+## Follow-up: long-horizon rerun (experiment 01b)
+
+Definition: `experiments/01b_layering_long_horizon.yaml`, the same as experiment 01
+except horizon 1200, burn-in 800 and samples every 20 time units. Run on commit
+6f9b8d7 (after the ticket-14 optimisations), 10 seeds per condition.
+
+| Layer | empty | random | Welch p |
+|---|---|---|---|
+| inner circle | 0.209 [0.197, 0.220] | 0.197 [0.183, 0.210] | 0.15 |
+| + close friends | 0.595 [0.575, 0.614] | 0.560 [0.552, 0.568] | 0.003 |
+| + friends | 1.285 [1.275, 1.295] | 1.257 [1.240, 1.274] | 0.007 |
+| all ties | 11.41 [11.36, 11.47] | 11.49 [11.43, 11.55] | 0.04 |
+
+Mean ratios between consecutive layers: empty 2.9 / 2.2 / 8.9, random 2.9 / 2.2 / 9.1.
+
+- **The inner-circle gap closes with more burn-in.** It falls from 0.03 to 0.01, and
+  the difference is no longer significant. Part of the gap in experiment 01 was
+  therefore a transient.
+- **Small differences remain in the middle layers:** 6% for close friends and 2% for
+  friends, both significant, with no sign of shrinking between burn-in 150 and 800.
+  That suggests a weak but lasting memory of the start, possibly through the network
+  structure (who knows whom) that the random start seeds. It is too small to change
+  the qualitative picture: **the layered structure is, to within a few percent, an
+  attractor of the dynamics.**
+- The inner circle is a little larger here than in experiment 01 (0.21 versus 0.17).
+  The engine's random stream changed between the two runs, but the more likely cause
+  is the slow build-up of inner ties: inner-circle decay is slow (δ = 0.015), so it
+  takes a long time to reach steady state.

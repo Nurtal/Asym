@@ -79,6 +79,7 @@ Experiment reports (`docs/experiments/`):
 | 08, 09 | Tamarit's inverse regime; robustness across population draws |
 | 10 | Morris sensitivity screening |
 | 11 | Collapse of layer sizes on the maintenance ratio B/δ (and η) |
+| 12 | Population-level asymmetry and its mechanisms (counterfactuals) |
 
 Scripts without the YAML harness: `experiments/03_…py`, `04_…py`, `07_…py`, `09_aggregate.py`,
 `10_morris.py`, `11_…py`, and the calibration tool `experiments/calibrate_layering.py`.

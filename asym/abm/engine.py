@@ -27,6 +27,16 @@ class Tie:
         self.x, self.r, self.o, self.circle, self.since, self.t = x, r, o, circle, since, t
 
 
+class Invitation:
+    __slots__ = ("id", "i", "j", "t_issue", "silent")
+
+    def __init__(self, inv_id, i, j, t_issue):
+        self.id, self.i, self.j, self.t_issue, self.silent = inv_id, i, j, t_issue, False
+
+
+EPS = 1e-9
+
+
 class Engine:
     def __init__(self, cfg: Config, seed: int):
         self.cfg = cfg
@@ -49,6 +59,9 @@ class Engine:
         self.scheduled: list = []  # heap of (time, seq, kind, payload)
         self._seq = 0
         self.t = 0.0
+        self.pending: dict[int, Invitation] = {}
+        self._inv_seq = 0
+        self.tau = np.array([a["tau"] for a in self.agents], dtype=float)
 
         for (i, j), vals in initial_ties(cfg, self.rng).items():
             self._create_tie(i, j, **vals, log=False)
@@ -96,9 +109,126 @@ class Engine:
             self.advance(i, tie)
 
     # --------------------------------------------------------------- run loop
+    def free(self, i) -> float:
+        return self.B[i] - self.U[i]
+
     def _rate_components(self):
-        """Return (bounds, handlers) for stochastic event channels. Overridden by mechanisms."""
-        return [], []
+        """Upper bounds of every stochastic channel, and the handler firing each one.
+
+        Handlers receive no argument; they draw the concrete actor themselves and
+        perform the thinning acceptance step where the true rate is state dependent.
+        """
+        g = self.g
+        bounds, handlers = [], []
+        free = self.B - self.U
+        issue = np.where(free >= 1.0 - EPS, free, 0.0) * g["gamma"]
+        total_issue = float(issue.sum())
+        if total_issue > 0:
+            bounds.append(total_issue)
+            handlers.append(lambda w=issue, tot=total_issue: self.issue(_pick(self.rng, w, tot)))
+        if self.pending:
+            new = [inv for inv in self.pending.values() if not inv.silent]
+            if new and g["omega"] > 0:
+                bounds.append(g["omega"] * len(new))
+                handlers.append(lambda new=new: self.respond(new[int(self.rng.integers(len(new)))]))
+        return bounds, handlers
+
+    # ------------------------------------------------------------ invitations
+    def choose_target(self, i) -> int:
+        a = self.agents[i]
+        candidates = list(self.out[i].items())
+        weights = []
+        if candidates and self.rng.random() >= a["epsilon"]:
+            for _j, tie in candidates:
+                self.advance(i, tie)
+                q = forms.reciprocity_ratio(tie.r, tie.o, self.g["o0"])
+                weights.append(tie.x ** a["beta"] * forms.reciprocity_weight(q, a["rho_star"]))
+            total = float(sum(weights))
+            if total > 0:
+                return candidates[_pick(self.rng, weights, total)][0]
+        j = int(self.rng.integers(self.N - 1))
+        return j + 1 if j >= i else j
+
+    def issue(self, i):
+        if self.N < 2:
+            return
+        j = self.choose_target(i)
+        self._inv_seq += 1
+        inv = Invitation(self._inv_seq, i, j, self.t)
+        self.pending[inv.id] = inv
+        cw = self.g["c_wait"]
+        self.U[i] += cw
+        self.U_pending[i] += cw
+        self.log("invite", i=i, j=j, inv=inv.id)
+
+    def _release_pending(self, inv):
+        del self.pending[inv.id]
+        cw = self.g["c_wait"]
+        self.U[inv.i] -= cw
+        self.U_pending[inv.i] -= cw
+
+    def acceptance(self, inv) -> float:
+        """Probability that the invitee accepts now (0 if either side cannot honour it)."""
+        i, j, g = inv.i, inv.j, self.g
+        if self.free(j) < 1.0 - EPS or self.free(i) + g["c_wait"] < 1.0 - EPS:
+            return 0.0
+        tie = self.out[j].get(i)
+        if tie is not None:
+            self.advance(j, tie)
+            x, q = tie.x, forms.reciprocity_ratio(tie.r, tie.o, g["o0"])
+        else:
+            x, q = 0.0, 1.0
+        gj = forms.reciprocity_weight(q, self.agents[j]["rho_star"])
+        load = self.U[j] / self.B[j]
+        return float(forms.acceptance_probability(x, gj, load, g["a0"], g["a"], g["b"], g["c"]))
+
+    def respond(self, inv):
+        if self.rng.random() < self.acceptance(inv):
+            self.accept(inv, "accept")
+        else:
+            self.not_accepted(inv)
+
+    def not_accepted(self, inv):
+        self._release_pending(inv)
+        self.log("decline", i=inv.i, j=inv.j, inv=inv.id)
+
+    def _ensure_tie(self, i, j):
+        tie = self.out[i].get(j)
+        if tie is None:
+            tie = self._create_tie(i, j, self.g["x0"])
+        return self.advance(i, tie)
+
+    def _perceived(self, i) -> float:
+        a, g = self.agents[i], self.g
+        xi = self.rng.normal(0.0, g["sigma_p"]) if g["sigma_p"] > 0 else 0.0
+        return g["inv_unit"] * math.exp(a["pi"] + xi)
+
+    def accept(self, inv, kind):
+        i, j, g = inv.i, inv.j, self.g
+        self._release_pending(inv)
+        self.U[i] += 1.0
+        self.U[j] += 1.0
+        self.schedule(self.t + g["d"], "interaction_end", (i, j))
+        for u, v in ((i, j), (j, i)):
+            tie = self._ensure_tie(u, v)
+            tie.x = forms.interaction_jump(tie.x, g["eta"])
+            tie.o += g["inv_unit"]
+            tie.r += self._perceived(u)
+        self.log(kind, i=i, j=j, inv=inv.id, wait=self.t - inv.t_issue)
+        self.check_tie(i, j)
+        self.check_tie(j, i)
+
+    def handle_scheduled(self, kind, payload):
+        if kind == "interaction_end":
+            i, j = payload
+            self.U[i] -= 1.0
+            self.U[j] -= 1.0
+            self.log("interaction_end", i=i, j=j)
+        else:
+            raise NotImplementedError(kind)
+
+    def check_tie(self, i, j):
+        """Circle transition / forgetting check on one tie (see housekeeping)."""
 
     def run(self) -> SimulationResult:
         horizon = self.sim["horizon"]
@@ -140,9 +270,6 @@ class Engine:
                 k_check += 1
 
         return self._result(sample_times, samples)
-
-    def handle_scheduled(self, kind, payload):
-        raise NotImplementedError(kind)
 
     def housekeeping(self):
         """Circle transitions and forgetting on every tie (overridden by mechanisms)."""

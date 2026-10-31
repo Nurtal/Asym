@@ -1,0 +1,82 @@
+name: inverse_regime_populations
+description: >
+  Robustness of experiment 08's per-archetype exponents μ across population draws.
+  Conditions n<N>_p<k> use population seed k (5 draws) at N = 12, 16, 24, 48 and
+  100, with 2 simulation seeds each. Aggregate with population draws as the unit
+  (docs/experiments/09-inverse-regime-populations.md).
+base:
+  archetypes:
+    butterfly_c: {base: butterfly, B: 20.0, beta: 0.6, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    loyal_few_c: {base: loyal_few, B: 10.0, beta: 3.0, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    transactional_c: {base: transactional, B: 12.5, beta: 1.2, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    avoidant_c: {base: avoidant, B: 12.5, beta: 1.2, delta: [0.045, 0.0332, 0.0226, 0.0135]}
+  population:
+    composition: {butterfly_c: 0.25, loyal_few_c: 0.25, transactional_c: 0.25, avoidant_c: 0.25}
+    size: 100
+    noise: 0.15
+    seed: 0
+  globals:
+    gamma: 0.85
+    a0: 0.5
+    eta: 0.09
+    thresholds: [0.31, 0.60, 0.82]
+  init: {mode: empty}
+  variants: {exploration: ties}
+  simulation:
+    horizon: 1500.0
+    burn_in: 1000.0
+    sample_interval: 25.0
+    record_events: false
+seeds: {range: [0, 2]}
+conditions:
+  n12_p0:
+    population: {size: 12, seed: 0}
+  n12_p1:
+    population: {size: 12, seed: 1}
+  n12_p2:
+    population: {size: 12, seed: 2}
+  n12_p3:
+    population: {size: 12, seed: 3}
+  n12_p4:
+    population: {size: 12, seed: 4}
+  n16_p0:
+    population: {size: 16, seed: 0}
+  n16_p1:
+    population: {size: 16, seed: 1}
+  n16_p2:
+    population: {size: 16, seed: 2}
+  n16_p3:
+    population: {size: 16, seed: 3}
+  n16_p4:
+    population: {size: 16, seed: 4}
+  n24_p0:
+    population: {size: 24, seed: 0}
+  n24_p1:
+    population: {size: 24, seed: 1}
+  n24_p2:
+    population: {size: 24, seed: 2}
+  n24_p3:
+    population: {size: 24, seed: 3}
+  n24_p4:
+    population: {size: 24, seed: 4}
+  n48_p0:
+    population: {size: 48, seed: 0}
+  n48_p1:
+    population: {size: 48, seed: 1}
+  n48_p2:
+    population: {size: 48, seed: 2}
+  n48_p3:
+    population: {size: 48, seed: 3}
+  n48_p4:
+    population: {size: 48, seed: 4}
+  n100_p0:
+    population: {size: 100, seed: 0}
+  n100_p1:
+    population: {size: 100, seed: 1}
+  n100_p2:
+    population: {size: 100, seed: 2}
+  n100_p3:
+    population: {size: 100, seed: 3}
+  n100_p4:
+    population: {size: 100, seed: 4}
+analysis: [layer_regime]

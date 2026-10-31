@@ -1,0 +1,34 @@
+name: tie_exploration_scaling
+description: >
+  Experiment 02 with variants.exploration = ties: exploration invitations only go
+  to existing ties, so new ties form only through encounters, whose rate does not
+  depend on N. Tests whether the layer sizes then become independent of the
+  population size. Longer horizon, because tie formation is slower.
+base:
+  archetypes:
+    butterfly_c: {base: butterfly, B: 20.0, beta: 0.6, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    loyal_few_c: {base: loyal_few, B: 10.0, beta: 3.0, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    transactional_c: {base: transactional, B: 12.5, beta: 1.2, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    avoidant_c: {base: avoidant, B: 12.5, beta: 1.2, delta: [0.045, 0.0332, 0.0226, 0.0135]}
+  population:
+    composition: {butterfly_c: 0.25, loyal_few_c: 0.25, transactional_c: 0.25, avoidant_c: 0.25}
+    size: 100
+    noise: 0.15
+    seed: 0
+  globals:
+    gamma: 0.85
+    a0: 0.5
+    eta: 0.09
+  init: {mode: empty}
+  variants: {exploration: ties}
+  simulation:
+    horizon: 1500.0
+    burn_in: 1000.0
+    sample_interval: 25.0
+    record_events: false
+seeds: {range: [0, 3]}
+conditions:
+  n100: {population: {size: 100}}
+  n200: {population: {size: 200}}
+  n400: {population: {size: 400}}
+analysis: [layering, layering_by_archetype]

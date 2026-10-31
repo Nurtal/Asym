@@ -85,6 +85,9 @@ undefined.
 
   This prediction is testable: in small communities, the people most demanding of
   reciprocity should keep a normal layer structure while the others invert.
+  **Revised by experiment 09:** over 5 population draws, avoidant agents resist
+  inversion as much as transactional ones except at the smallest N. The robust
+  ordering is butterfly < loyal_few < avoidant ≈ transactional.
 - **The "isolated dyad always becomes a friendship" result of experiment 03 is the
   N = 2 extreme of the same curve.**
 

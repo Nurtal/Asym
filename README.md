@@ -14,7 +14,8 @@ The model has two levels of description:
   Ensemble averages of `simulate` converge to it.
 
 Domain vocabulary: [`CONTEXT.md`](CONTEXT.md). Equations: [`docs/model-spec.md`](docs/model-spec.md).
-Decisions: [`docs/adr/`](docs/adr/).
+ODD description: [`docs/odd.md`](docs/odd.md). Decisions: [`docs/adr/`](docs/adr/).
+Literature: [`docs/research/literature-review.md`](docs/research/literature-review.md).
 
 ## Install
 
@@ -63,6 +64,23 @@ python -m asym.experiments analyse results/layering_empty_vs_random
 
 Each run directory holds one `.npz` per (condition, seed), plus a `manifest.json`
 (resolved configs, seeds, git commit, result hashes) and an `analysis.json`.
+
+Experiment reports (`docs/experiments/`):
+
+| # | Topic |
+|---|---|
+| 01, 01b | Layering from empty vs random start; long-horizon rerun |
+| 02 | First calibration; layer scaling with N (baseline exploration) |
+| 03 | Isolated dyads by archetype pair (mean-field) |
+| 04 | Embedded dyads: focal dyad bridging two cliques (mean-field) |
+| 05 | Encounter-only tie formation makes layering independent of N |
+| 06 | Dunbar-calibrated thresholds; scaling check |
+| 07 | Noise-induced switching of embedded dyads (stochastic ABM) |
+| 08, 09 | Tamarit's inverse regime; robustness across population draws |
+| 10 | Morris sensitivity screening |
+
+Scripts without the YAML harness: `experiments/03_…py`, `04_…py`, `07_…py`, `09_aggregate.py`,
+`10_morris.py`, and the calibration tool `experiments/calibrate_layering.py`.
 
 ## Benchmark
 

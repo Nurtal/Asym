@@ -62,12 +62,14 @@ class Engine:
         self.pending: dict[int, Invitation] = {}
         self._inv_seq = 0
         self.tau = np.array([a["tau"] for a in self.agents], dtype=float)
+        self.nu = np.array([a["nu"] for a in self.agents], dtype=float)
+        self.total_nu = float(self.nu.sum())
 
         for (i, j), vals in initial_ties(cfg, self.rng).items():
             self._create_tie(i, j, **vals, log=False)
 
     # ----------------------------------------------------------------- helpers
-    def log(self, kind, **data):
+    def log(self, kind, /, **data):
         if self.record:
             ev = {"t": self.t, "type": kind}
             for k, v in data.items():
@@ -126,6 +128,9 @@ class Engine:
         if total_issue > 0:
             bounds.append(total_issue)
             handlers.append(lambda w=issue, tot=total_issue: self.issue(_pick(self.rng, w, tot)))
+        if self.total_nu > 0 and self.N > 1:
+            bounds.append(self.total_nu)
+            handlers.append(lambda: self.encounter(_pick(self.rng, self.nu, self.total_nu)))
         if self.pending:
             invs = list(self.pending.values())
             new = [inv for inv in invs if not inv.silent]
@@ -143,25 +148,34 @@ class Engine:
         return bounds, handlers
 
     # ------------------------------------------------------------ invitations
-    def choose_target(self, i) -> int:
+    def choose_target(self, i):
+        """Target of an invitation, or None when the agent has nobody to invite.
+
+        With probability ε the target is uniform among all other agents (exploration);
+        otherwise it is drawn among existing ties with weight x^β·g(q). An agent with
+        no weighted tie issues nothing on the non-exploration branch.
+        """
         a = self.agents[i]
+        if self.rng.random() < a["epsilon"]:
+            j = int(self.rng.integers(self.N - 1))
+            return j + 1 if j >= i else j
         candidates = list(self.out[i].items())
         weights = []
-        if candidates and self.rng.random() >= a["epsilon"]:
-            for _j, tie in candidates:
-                self.advance(i, tie)
-                q = forms.reciprocity_ratio(tie.r, tie.o, self.g["o0"])
-                weights.append(tie.x ** a["beta"] * forms.reciprocity_weight(q, a["rho_star"]))
-            total = float(sum(weights))
-            if total > 0:
-                return candidates[_pick(self.rng, weights, total)][0]
-        j = int(self.rng.integers(self.N - 1))
-        return j + 1 if j >= i else j
+        for _j, tie in candidates:
+            self.advance(i, tie)
+            q = forms.reciprocity_ratio(tie.r, tie.o, self.g["o0"])
+            weights.append(tie.x ** a["beta"] * forms.reciprocity_weight(q, a["rho_star"]))
+        total = float(sum(weights))
+        if total <= 0:
+            return None
+        return candidates[_pick(self.rng, weights, total)][0]
 
     def issue(self, i):
         if self.N < 2:
             return
         j = self.choose_target(i)
+        if j is None:
+            return
         self._inv_seq += 1
         inv = Invitation(self._inv_seq, i, j, self.t)
         self.pending[inv.id] = inv
@@ -260,6 +274,45 @@ class Engine:
         self.log(kind, i=i, j=j, inv=inv.id, wait=self.t - inv.t_issue)
         self.check_tie(i, j)
         self.check_tie(j, i)
+
+    # ------------------------------------------------------------- encounters
+    def encounter(self, i):
+        g = self.g
+        p_rand = g["mu_rand"] / (g["mu_rand"] + g["mu_tri"]) if g["mu_rand"] + g["mu_tri"] > 0 else 0.0
+        if self.rng.random() < p_rand:
+            kind, via = "random", None
+            known = self.out[i]
+            candidates = [j for j in range(self.N) if j != i and j not in known]
+            if not candidates:
+                return
+            j = candidates[int(self.rng.integers(len(candidates)))]
+        else:
+            kind = "triadic"
+            friends = list(self.out[i].items())
+            if not friends:
+                return
+            for _k, tie in friends:
+                self.advance(i, tie)
+            w = [tie.x for _k, tie in friends]
+            if sum(w) <= 0:
+                return
+            via = friends[_pick(self.rng, w, sum(w))][0]
+            second = [(j, tie) for j, tie in self.out[via].items() if j != i and j not in self.out[i]]
+            if not second:
+                return
+            for _j, tie in second:
+                self.advance(via, tie)
+            w2 = [tie.x for _j, tie in second]
+            if sum(w2) <= 0:
+                return
+            j = second[_pick(self.rng, w2, sum(w2))][0]
+        for u, v in ((i, j), (j, i)):
+            if v not in self.out[u]:
+                self._create_tie(u, v, g["x0"])
+        if via is None:
+            self.log("encounter", i=i, j=j, kind=kind)
+        else:
+            self.log("encounter", i=i, j=j, kind=kind, via=self.ids[via])
 
     def handle_scheduled(self, kind, payload):
         if kind == "interaction_end":

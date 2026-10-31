@@ -23,7 +23,7 @@ def test_extreme_alpha_gives_single_outcome(alpha, kind):
 
 
 def test_silence_fraction_converges_to_alpha():
-    res = simulate(_dyad(0.3, horizon=1500.0), seed=1)
+    res = simulate(_dyad(0.3, a={"delta": 0.0}, horizon=1500.0), seed=1)
     n_sil, n_dec = len(res.events_of("silence")), len(res.events_of("decline"))
     assert n_sil + n_dec > 1000
     assert n_sil / (n_sil + n_dec) == pytest.approx(0.3, abs=0.04)

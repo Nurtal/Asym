@@ -89,7 +89,7 @@ def test_invitation_events_are_logged():
 
 
 def test_accepted_interaction_updates_both_sides():
-    raw = make_config(globals_={**ALWAYS_ACCEPT, "eta": 0.2}, simulation={"horizon": 3.0, "sample_interval": 0.01},
+    raw = make_config(globals_={**ALWAYS_ACCEPT, "eta": 0.2, "psi": 0.0}, simulation={"horizon": 3.0, "sample_interval": 0.01},
                       agents=[{"id": "a", "delta": 0.0, "lam": 0.0}, {"id": "b", "delta": 0.0, "lam": 0.0}])
     res = simulate(raw, seed=0)
     ab, ba = res.trajectory("a", "b"), res.trajectory("b", "a")

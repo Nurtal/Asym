@@ -83,7 +83,7 @@ SIMULATION_DEFAULTS: dict[str, Any] = {
     "burn_in": 0.0,
     "sample_interval": 1.0,
     "check_interval": 0.25,  # housekeeping period for circle transitions / forgetting
-    "ode_step": 0.05,  # max RK4 sub-step for the closeness flow
+    "ode_step": 0.2,  # max RK4 sub-step for the closeness flow
     "record_events": True,
     "mf_step": 0.01,  # fixed RK4 step of the mean-field solver
 }

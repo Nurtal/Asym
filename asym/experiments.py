@@ -124,6 +124,7 @@ def run_experiment(path, out_dir="results", workers: int = 1, analyse: bool = Tr
     """Run every (condition, seed) of an experiment and store the results; returns the run directory."""
     spec = load_experiment(path)
     configs = condition_configs(spec)
+    version = code_version()  # captured before running: the code that produced the results
     run_dir = Path(out_dir) / spec["name"]
     jobs = []
     for cond, raw in configs.items():
@@ -141,7 +142,7 @@ def run_experiment(path, out_dir="results", workers: int = 1, analyse: bool = Tr
         "experiment": {k: v for k, v in spec.items() if not k.startswith("_")},
         "configs": {c: load_config(raw).to_dict() for c, raw in configs.items()},
         "seeds": spec["seeds"],
-        "code": code_version(),
+        "code": version,
         "results": {str(Path(p).relative_to(run_dir)): h for p, h in done},
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=float))

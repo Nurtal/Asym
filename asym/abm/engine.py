@@ -37,6 +37,34 @@ class Invitation:
 EPS = 1e-9
 
 
+class Pool:
+    """Set of items with O(1) insertion, removal and uniform random choice."""
+
+    __slots__ = ("items", "pos")
+
+    def __init__(self):
+        self.items, self.pos = [], {}
+
+    def __len__(self):
+        return len(self.items)
+
+    def add(self, item):
+        self.pos[item.id] = len(self.items)
+        self.items.append(item)
+
+    def discard(self, item):
+        k = self.pos.pop(item.id, None)
+        if k is None:
+            return
+        last = self.items.pop()
+        if k < len(self.items):
+            self.items[k] = last
+            self.pos[last.id] = k
+
+    def choice(self, rng):
+        return self.items[int(rng.integers(len(self.items)))]
+
+
 class Engine:
     def __init__(self, cfg: Config, seed: int):
         self.cfg = cfg
@@ -68,6 +96,8 @@ class Engine:
         self.budget_shocks: list[dict[int, float]] = [dict() for _ in range(self.N)]
         self._shock_seq = 0
         self.total_nu = float(self.nu.sum())
+        self.max_inv_tau = float((1.0 / self.tau).max()) if self.N else 0.0
+        self.p_new, self.p_silent, self.p_all = Pool(), Pool(), Pool()
 
         for (i, j), vals in initial_ties(cfg, self.rng).items():
             self._create_tie(i, j, **vals, log=False)
@@ -123,38 +153,55 @@ class Engine:
     def _rate_components(self):
         """Upper bounds of every stochastic channel, and the handler firing each one.
 
-        Handlers receive no argument; they draw the concrete actor themselves and
-        perform the thinning acceptance step where the true rate is state dependent.
+        Handlers draw the concrete actor themselves and perform the thinning
+        acceptance step where the true rate is state dependent.
         """
         g = self.g
         bounds, handlers = [], []
         free = self.B - self.U
-        issue = np.where(free >= 1.0 - EPS, free, 0.0) * g["gamma"]
-        total_issue = float(issue.sum())
+        issue = np.where(free >= 1.0 - EPS, free, 0.0)
+        total_issue = float(issue.sum()) * g["gamma"]
         if total_issue > 0:
+            self._issue_w = issue
             bounds.append(total_issue)
-            handlers.append(lambda w=issue, tot=total_issue: self.issue(_pick(self.rng, w, tot)))
+            handlers.append(self._fire_issue)
         if g["shock_rate"] > 0:
             bounds.append(g["shock_rate"])
             handlers.append(self.shock)
         if self.total_nu > 0 and self.N > 1:
             bounds.append(self.total_nu)
-            handlers.append(lambda: self.encounter(_pick(self.rng, self.nu, self.total_nu)))
-        if self.pending:
-            invs = list(self.pending.values())
-            new = [inv for inv in invs if not inv.silent]
-            silent = [inv for inv in invs if inv.silent]
-            if new and g["omega"] > 0:
-                bounds.append(g["omega"] * len(new))
-                handlers.append(lambda new=new: self.respond(new[int(self.rng.integers(len(new)))]))
-            if silent and g["zeta"] > 0:
-                bounds.append(g["zeta"] * len(silent))
-                handlers.append(lambda silent=silent: self.late_response(silent[int(self.rng.integers(len(silent)))]))
-            cancel = [1.0 / self.tau[inv.i] for inv in invs]
-            total_cancel = float(sum(cancel))
-            bounds.append(total_cancel)
-            handlers.append(lambda invs=invs, w=cancel, tot=total_cancel: self.maybe_cancel(invs[_pick(self.rng, w, tot)]))
+            handlers.append(self._fire_encounter)
+        if self.p_all:
+            if self.p_new and g["omega"] > 0:
+                bounds.append(g["omega"] * len(self.p_new))
+                handlers.append(self._fire_response)
+            if self.p_silent and g["zeta"] > 0:
+                bounds.append(g["zeta"] * len(self.p_silent))
+                handlers.append(self._fire_late)
+            bounds.append(self.max_inv_tau * len(self.p_all))
+            handlers.append(self._fire_cancel)
         return bounds, handlers
+
+    def _fire_issue(self):
+        w = self._issue_w
+        cum = np.cumsum(w)
+        k = int(np.searchsorted(cum, self.rng.random() * cum[-1], side="right"))
+        self.issue(min(k, self.N - 1))
+
+    def _fire_encounter(self):
+        self.encounter(_pick(self.rng, self.nu, self.total_nu))
+
+    def _fire_response(self):
+        self.respond(self.p_new.choice(self.rng))
+
+    def _fire_late(self):
+        self.late_response(self.p_silent.choice(self.rng))
+
+    def _fire_cancel(self):
+        inv = self.p_all.choice(self.rng)
+        # thinning, part 1: per-invitation bound max(1/τ) against the inviter's 1/τ_i
+        if self.rng.random() < (1.0 / self.tau[inv.i]) / self.max_inv_tau:
+            self.maybe_cancel(inv)
 
     # ------------------------------------------------------------ invitations
     def choose_target(self, i):
@@ -188,6 +235,8 @@ class Engine:
         self._inv_seq += 1
         inv = Invitation(self._inv_seq, i, j, self.t)
         self.pending[inv.id] = inv
+        self.p_new.add(inv)
+        self.p_all.add(inv)
         cw = self.g["c_wait"]
         self.U[i] += cw
         self.U_pending[i] += cw
@@ -195,6 +244,9 @@ class Engine:
 
     def _release_pending(self, inv):
         del self.pending[inv.id]
+        self.p_new.discard(inv)
+        self.p_silent.discard(inv)
+        self.p_all.discard(inv)
         cw = self.g["c_wait"]
         self.U[inv.i] -= cw
         self.U_pending[inv.i] -= cw
@@ -223,6 +275,8 @@ class Engine:
     def not_accepted(self, inv):
         if self.rng.random() < self.agents[inv.j]["alpha"]:
             inv.silent = True
+            self.p_new.discard(inv)
+            self.p_silent.add(inv)
             self.log("silence", i=inv.i, j=inv.j, inv=inv.id)
             return
         self._release_pending(inv)
@@ -241,7 +295,7 @@ class Engine:
         i, j, g = inv.i, inv.j, self.g
         tie = self.out[i].get(j)
         x = self.advance(i, tie).x if tie is not None else 0.0
-        # thinning: true hazard 1/(τ(1+h1·x)) against bound 1/τ
+        # thinning, part 2: true hazard 1/(τ(1+h1·x)) against 1/τ
         if self.rng.random() >= 1.0 / (1.0 + g["h1"] * x):
             return
         self._release_pending(inv)
@@ -453,12 +507,10 @@ class Engine:
                 _, _, kind, payload = heapq.heappop(self.scheduled)
                 self.handle_scheduled(kind, payload)
             elif t_sched == t_sample:
-                self.advance_all()
-                self.housekeeping()
+                self.housekeeping()  # advances every tie
                 samples.append(self._snapshot())
                 k_sample += 1
             else:
-                self.advance_all()
                 self.housekeeping()
                 k_check += 1
 

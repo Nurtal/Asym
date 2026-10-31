@@ -25,20 +25,27 @@ def reciprocity_weight(q, rho_star):
     return q / (q + rho_star)  # q > 0 because o0 > 0
 
 
+def _pos(v):
+    """max(0, v) for floats (fast path) and arrays."""
+    if isinstance(v, float):
+        return v if v > 0.0 else 0.0
+    return np.maximum(0.0, v)
+
+
 def deficit(q, rho_star):
     """D = max(0, ρ* − q)."""
-    return np.maximum(0.0, rho_star - q)
+    return _pos(rho_star - q)
 
 
 def closeness_drift(x, q, delta, kappa, ell, rho_star, mu_s=0.0):
     """dx/dt between events: decay, loyalty-damped deficit erosion, optional surplus boost."""
     dx = -delta * x - kappa * (1.0 - ell * x) * deficit(q, rho_star) * x
-    if mu_s:
-        dx = dx + mu_s * np.maximum(0.0, q - rho_star) * x * (1.0 - x)
+    if (mu_s != 0.0) if isinstance(mu_s, float) else np.any(mu_s):
+        dx = dx + mu_s * _pos(q - rho_star) * x * (1.0 - x)
     return dx
 
 
-def advance_tie_flow(x, r, o, dt, *, delta, kappa, ell, rho_star, lam, o0, mu_s=0.0, max_step=0.05):
+def advance_tie_flow(x, r, o, dt, *, delta, kappa, ell, rho_star, lam, o0, mu_s=0.0, max_step=0.2):
     """Advance (x, r, o) of one tie over dt with the deterministic flow.
 
     r and o decay exponentially (closed form). x decays in closed form when the flow
@@ -49,13 +56,20 @@ def advance_tie_flow(x, r, o, dt, *, delta, kappa, ell, rho_star, lam, o0, mu_s=
     decay = math.exp(-lam * dt)
     if kappa == 0.0 and mu_s == 0.0:
         return x * math.exp(-delta * dt), r * decay, o * decay
+    if mu_s == 0.0:
+        # q(s) moves monotonically towards 1 between events, so if q ≥ ρ* at both ends
+        # there is no deficit over the whole interval: pure decay, in closed form
+        q0 = (r + o0) / (o + o0)
+        q1 = (r * decay + o0) / (o * decay + o0)
+        if q0 >= rho_star and q1 >= rho_star:
+            return x * math.exp(-delta * dt), r * decay, o * decay
     n = max(1, math.ceil(dt / max_step))
     h = dt / n
 
     def f(xx, s):
         e = math.exp(-lam * s)
         q = (r * e + o0) / (o * e + o0)
-        return float(closeness_drift(xx, q, delta, kappa, ell, rho_star, mu_s))
+        return closeness_drift(xx, q, delta, kappa, ell, rho_star, mu_s)
 
     s = 0.0
     for _ in range(n):

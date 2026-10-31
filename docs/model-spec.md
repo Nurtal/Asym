@@ -270,13 +270,46 @@ modularity.
 
 ---
 
-## 11. Open points
+## 11. Implementation decisions (v0.1)
 
-- **Budget semantics.** This spec reads B_i as a *stock* of concurrent slots (an
-  interaction occupies one slot for duration d, a pending invitation `c_wait`
-  slots), with issuing rate ∝ free slots. To be confirmed in implementation.
-- **Own-investment memory o_ij.** This is added to make the reciprocity ratio
-  well-defined. It was implicit in the design discussion.
+These were settled while implementing the tickets. Where they differ from the text
+above, they take precedence.
+
+- **Budget semantics.** B_i is a *stock* of concurrent slots. An accepted interaction
+  occupies 1 slot on both sides for duration d, and a pending invitation occupies
+  `c_wait` slots of the inviter. An agent issues invitations at rate γ·(B_i − U_i)
+  only while it has at least one full free slot. An invitee can accept only if it
+  has a free slot and the inviter can still turn its `c_wait` into a full slot.
+- **Own-investment memory o_ij** makes the reciprocity ratio well-defined. The ratio
+  uses a neutral prior: `q = (r + o0)/(o + o0)`, so a fresh tie starts at q = 1 (no
+  deficit as long as ρ* < 1). `o0 > 0` is required.
+- **Circle thresholds.** `globals.thresholds` holds 3 values, the lower bounds of
+  friend, close friend and inner circle. Acquaintance is the floor of every existing
+  tie. Below `x_min` the tie is forgotten.
+- **Targets.** With probability ε an invitation goes to a uniformly random other
+  agent (exploration). Otherwise its target is drawn among existing ties ∝ x^β·g(q).
+  An agent without any weighted tie issues nothing on that branch.
+- **Accepting a stranger** (exploration) creates both ties at x0, then applies the
+  interaction jump.
+- **Perception.** Each accepted interaction adds `inv_unit · e^{π+ξ}` to r and
+  `inv_unit` to o on both sides. A decline adds `c_rej · inv_unit` to the inviter's o.
+- **Population sampling** uses `population.seed`, independently of the simulation
+  seed, so an ensemble of seeds shares one population.
+- **Exactness.** Event rates are drawn by thinning against constant bounds, so the
+  PDMP is simulated exactly. Circle transitions and forgetting are checked after
+  events on the ties concerned and every `simulation.check_interval`.
+- **Mean-field.** The waiting-age masses Wu, Ws carry the expected cancellation drop.
+  Interaction occupancy is a delay of length d (or exponential, used for the dyad
+  reduction). Encounters, shocks and the dormant variant are not represented.
+- **Dyad reduction** is numerical: the quasi-steady state of the fast variables is
+  found by relaxation. Fixed points come from batched Newton iterations with
+  finite-difference Jacobians, because no closed form exists.
+- **Variants.** Guilt multiplies the invitee's x_ji by (1 − guilt) on cancellation.
+  Soft capacity scales the closeness gain by 1/(1 + cost·max(0, n_c − K_c)/K_c).
+  A dormant tie keeps its decayed r and o, and is revived at x0 + revival_bonus.
+
+## 12. Open points
+
 - Exact forms of `g`, `h` and the per-circle δ ladder.
 - Whether circles add an allocation priority bonus on top of x^β.
 - Calibration of archetype centres and noise levels.

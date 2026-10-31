@@ -96,8 +96,8 @@ VARIANT_DEFAULTS: dict[str, Any] = {
     "revival_bonus": 0.0,  # closeness bonus when a dormant tie is revived
 }
 
-INIT_KEYS = {"mode", "ties", "ties_path", "agents_path", "path", "density", "x_range", "circle_from_x"}
-SECTIONS = {"simulation", "globals", "agents", "population", "archetypes", "init", "variants", "name", "description"}
+INIT_KEYS = {"mode", "ties", "ties_path", "agents_path", "path", "density", "x_range", "base_dir"}
+SECTIONS = {"simulation", "globals", "agents", "population", "archetypes", "init", "variants", "name", "description", "_base_dir"}
 
 
 @dataclass
@@ -171,27 +171,35 @@ def validate_agent(agent: dict) -> dict:
     return agent
 
 
-def _resolve_agents(raw: dict) -> list[dict]:
-    from asym.model.archetypes import build_population  # local import: avoid cycle
+def _resolve_agents(raw: dict, init: dict, base_dir) -> list[dict]:
+    from asym.io import read_table  # local imports: avoid cycles
+    from asym.model.archetypes import build_population
 
     agents_raw = raw.get("agents")
     population = raw.get("population")
     archetypes = raw.get("archetypes")
-    if agents_raw is not None and population is not None:
-        raise ConfigError("use either 'agents' or 'population', not both")
-    if agents_raw is None and population is None:
-        if raw.get("init", {}).get("agents_path"):
-            return []  # agents come from the initial-condition file
-        raise ConfigError("config needs 'agents' or 'population'")
-    return build_population(agents_raw, population, archetypes)
+    file_agents = None
+    if init["mode"] == "file" and init.get("agents_path"):
+        file_agents = read_table(init["agents_path"], base_dir)
+    elif init["mode"] == "file" and init.get("path"):
+        file_agents = read_table(init["path"], base_dir, key="agents") or None
+    sources = [s for s in (agents_raw, population, file_agents) if s is not None]
+    if len(sources) > 1:
+        raise ConfigError("agents must come from exactly one of 'agents', 'population' or the init file")
+    if not sources:
+        raise ConfigError("config needs 'agents', 'population' or an init file with agents")
+    return build_population(agents_raw if population is None else None, population, archetypes) \
+        if file_agents is None else build_population(file_agents, None, archetypes)
 
 
 def load_config(source) -> Config:
     """Load and validate a config from a mapping, a YAML file path, or a Config."""
     if isinstance(source, Config):
         return source
+    base_dir = None
     if isinstance(source, (str, Path)):
         path = Path(source)
+        base_dir = path.parent
         with open(path) as fh:
             raw = yaml.safe_load(fh)
     elif isinstance(source, Mapping):
@@ -228,5 +236,8 @@ def load_config(source) -> Config:
     if not 0 <= glob["eta"] <= 1:
         raise ConfigError("globals.eta must lie in [0, 1]")
 
-    agents = _resolve_agents(raw)
+    base_dir = init.pop("base_dir", None) or base_dir or raw.get("_base_dir")
+    agents = _resolve_agents(raw, init, base_dir)
+    if base_dir is not None:
+        init["base_dir"] = str(base_dir)
     return Config(simulation=sim, globals=glob, agents=agents, init=init, variants=variants, raw=raw)

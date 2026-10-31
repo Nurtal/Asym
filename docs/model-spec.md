@@ -312,5 +312,8 @@ above, they take precedence.
 
 - Exact forms of `g`, `h` and the per-circle δ ladder.
 - Whether circles add an allocation priority bonus on top of x^β.
-- Calibration of archetype centres and noise levels.
+- Calibration of archetype centres and noise levels. A first calibration towards
+  Dunbar-like ratios is in `docs/experiments/02-calibrated-layering-scaling.md`. It holds
+  at N ≈ 100, but the outer ratio grows with N: open question of what caps the
+  acquaintance layer.
 - Mapping the arbitrary time unit to days/weeks.

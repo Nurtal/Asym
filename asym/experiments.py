@@ -258,8 +258,52 @@ def analyse_layer_regime(runs: dict) -> dict:
     return report
 
 
+def analyse_asymmetry(runs: dict, min_circle: int = 2) -> dict:
+    """Population-level asymmetry, time-averaged per run, with 95% CIs over seeds.
+
+    - ``unreciprocated``: share of friendship-level ties (circle ≥ friend) not
+      reciprocated at friendship level
+    - ``correlation``: correlation of x_ij and x_ji over mutual dyads
+    - ``one_sided``: share of dyads with only one direction
+    - ``abs_asymmetry``: mean |x_ij − x_ji| over mutual dyads
+    - ``by_pair``: per ordered archetype pair "A->B", the unreciprocated share of A's
+      friendship ties towards B, and the mean x_AB − x_BA (negative: A is the less
+      close side)
+    """
+    report = {"conditions": {}}
+    for c, rs in runs.items():
+        per = {"unreciprocated": [], "correlation": [], "one_sided": [], "abs_asymmetry": []}
+        pairs: dict = {}
+        for r in rs:
+            K = len(r.times)
+            fr = [metrics.friendship_reciprocity(r, at=k, min_circle=min_circle) for k in range(K)]
+            asy = [metrics.asymmetry(r, at=k) for k in range(K)]
+            per["unreciprocated"].append(np.nanmean([f["unreciprocated"] for f in fr]))
+            per["correlation"].append(np.nanmean([f["correlation"] for f in fr]))
+            per["one_sided"].append(np.mean([a["one_sided"] for a in asy]))
+            per["abs_asymmetry"].append(np.mean([np.mean(a["abs_diff"]) if len(a["abs_diff"]) else np.nan
+                                                 for a in asy]))
+            run_pairs: dict = {}
+            for f in fr:
+                for (ga, gb), d in f["by_pair"].items():
+                    e = run_pairs.setdefault(f"{ga}->{gb}", {"unreciprocated": [], "signed_asymmetry": []})
+                    e["unreciprocated"].append(d["unreciprocated"])
+                    e["signed_asymmetry"].append(d["signed_asymmetry"])
+            for k, e in run_pairs.items():
+                tgt = pairs.setdefault(k, {"unreciprocated": [], "signed_asymmetry": []})
+                for m in tgt:
+                    v = np.array(e[m], dtype=float)
+                    tgt[m].append(float(np.nanmean(v)) if np.isfinite(v).any() else math.nan)
+        report["conditions"][c] = {
+            **{k: _ci([v for v in vals if np.isfinite(v)]) for k, vals in per.items()},
+            "by_pair": {k: {m: _ci([v for v in vals if np.isfinite(v)]) for m, vals in d.items()}
+                        for k, d in sorted(pairs.items())},
+        }
+    return report
+
+
 ANALYSES = {"layering": analyse_layering, "layering_by_archetype": analyse_layering_by_archetype,
-            "layer_regime": analyse_layer_regime}
+            "layer_regime": analyse_layer_regime, "asymmetry": analyse_asymmetry}
 
 
 def analyse_run(run_dir, names) -> dict:

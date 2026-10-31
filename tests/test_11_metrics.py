@@ -157,3 +157,23 @@ def test_layer_exponent():
     assert math.isnan(M.layer_exponent([0.0, 0.0, 0.0, 5.0]))  # fewer than two populated layers
     # zero layers are skipped
     assert M.layer_exponent([0.0, 3.0, 9.0, 27.0]) == pytest.approx(math.log(3))
+
+
+def test_friendship_reciprocity():
+    # a→b friend (2) and b→a friend: reciprocated; a→c close (3), c→a acquaintance (1): unreciprocated;
+    # c→d friend, no d→c: unreciprocated; d→a acquaintance only: not a friendship
+    rows = [(0.0, "a", "b", 0.5, 0, 0, 2), (0.0, "b", "a", 0.4, 0, 0, 2),
+            (0.0, "a", "c", 0.7, 0, 0, 3), (0.0, "c", "a", 0.1, 0, 0, 1),
+            (0.0, "c", "d", 0.4, 0, 0, 2), (0.0, "d", "a", 0.1, 0, 0, 1)]
+    agents = [{"id": "a", "archetype": "x"}, {"id": "b", "archetype": "y"}, {"id": "c", "archetype": "y"},
+              {"id": "d", "archetype": "x"}]
+    res = SimulationResult.build(IDS, (0.0,), rows, config={"agents": agents})
+    fr = M.friendship_reciprocity(res, min_circle=2)
+    assert fr["n_friend_ties"] == 4 and fr["unreciprocated"] == pytest.approx(0.5)
+    assert fr["correlation"] == pytest.approx(np.corrcoef([0.5, 0.4, 0.7, 0.1], [0.4, 0.5, 0.1, 0.7])[0, 1])
+    bp = fr["by_pair"]
+    assert bp[("x", "y")]["n"] == 2 and bp[("x", "y")]["unreciprocated"] == pytest.approx(0.5)  # a→b ok, a→c not
+    assert bp[("y", "x")]["n"] == 2 and bp[("y", "x")]["unreciprocated"] == pytest.approx(0.5)  # b→a ok, c→d not
+    # mean signed asymmetry over mutual dyads seen from the row archetype: a→b +0.1, a→c +0.6
+    assert bp[("x", "y")]["signed_asymmetry"] == pytest.approx(0.35)
+    assert bp[("y", "x")]["signed_asymmetry"] == pytest.approx(-0.35)

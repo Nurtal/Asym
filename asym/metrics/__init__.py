@@ -129,6 +129,53 @@ def dyad_switching(res: SimulationResult, i, j, low: float, high: float) -> dict
 
 
 # ----------------------------------------------------------------- asymmetry
+def friendship_reciprocity(res: SimulationResult, at: int = -1, min_circle: int = 2) -> dict:
+    """Reciprocity of friendship-level ties, as in nomination surveys.
+
+    A "friendship nomination" is a tie i→j at circle ≥ ``min_circle``. It is
+    reciprocated when j→i exists at circle ≥ ``min_circle`` as well. Returns:
+
+    - ``unreciprocated``: share of nominations that are not reciprocated
+    - ``n_friend_ties``: number of nominations
+    - ``correlation``: Pearson correlation of (x_ij, x_ji) over mutual dyads (both
+      directions present), counting each direction once
+    - ``by_pair``: {(archetype_i, archetype_j): {"n", "unreciprocated",
+      "signed_asymmetry"}}. The last entry is the mean x_ij − x_ji over mutual dyads,
+      seen from i's archetype; a negative value means i's side is the less close one.
+    """
+    s = _snap(res, at)
+    ties = {(int(i), int(j)): (float(x), int(c)) for i, j, x, c in zip(s["i"], s["j"], s["x"], s["circle"])}
+    arch = {a["id"]: a.get("archetype") for a in res.config.get("agents", [])}
+    group = [arch.get(a) for a in res.agent_ids]
+    noms = unrec = 0
+    by: dict = {}
+    xs, ys = [], []
+    for (i, j), (x, c) in ties.items():
+        key = (group[i], group[j])
+        d = by.setdefault(key, {"n": 0, "unrec": 0, "asym": []})
+        back = ties.get((j, i))
+        if back is not None:
+            xs.append(x)
+            ys.append(back[0])
+            d["asym"].append(x - back[0])
+        if c >= min_circle:
+            noms += 1
+            d["n"] += 1
+            if back is None or back[1] < min_circle:
+                unrec += 1
+                d["unrec"] += 1
+    corr = float(np.corrcoef(xs, ys)[0, 1]) if len(xs) > 2 else math.nan
+    return {
+        "unreciprocated": unrec / noms if noms else math.nan,
+        "n_friend_ties": noms,
+        "correlation": corr,
+        "by_pair": {k: {"n": d["n"], "unreciprocated": d["unrec"] / d["n"] if d["n"] else math.nan,
+                        "signed_asymmetry": float(np.mean(d["asym"])) if d["asym"] else math.nan}
+                    for k, d in by.items()},
+    }
+
+
+
 def asymmetry(res: SimulationResult, at: int = -1) -> dict:
     """Asymmetry of the dyads present at sample ``at``.
 

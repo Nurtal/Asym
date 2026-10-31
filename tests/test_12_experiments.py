@@ -87,3 +87,13 @@ def test_layer_regime_analysis(tmp_path):
     assert set(rep) >= {"layer_counts", "mu", "inverse_fraction", "by_archetype"}
     assert 0.0 <= rep["inverse_fraction"]["mean"] <= 1.0
     assert set(rep["by_archetype"]) == {"butterfly", "loyal_few", "transactional", "avoidant"}
+
+
+def test_asymmetry_analysis(tmp_path):
+    from asym.experiments import analyse_run
+    run_dir = run_experiment(_tiny_experiment(tmp_path), tmp_path / "out", analyse=False)
+    rep = analyse_run(run_dir, ["asymmetry"])["asymmetry"]["conditions"]["empty"]
+    assert set(rep) >= {"unreciprocated", "correlation", "one_sided", "abs_asymmetry", "by_pair"}
+    assert rep["unreciprocated"]["n"] == 3
+    assert "butterfly->transactional" in rep["by_pair"]
+    assert set(rep["by_pair"]["butterfly->transactional"]) == {"unreciprocated", "signed_asymmetry"}

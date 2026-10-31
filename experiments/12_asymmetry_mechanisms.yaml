@@ -1,0 +1,53 @@
+name: asymmetry_mechanisms
+description: >
+  Research question 3: where does persistent asymmetry come from? Calibrated
+  population of experiment 06 at N = 100, empty start, with counterfactuals that
+  remove one source of heterogeneity at a time:
+  - no_deficit: transactional agents get ρ* = 0.8 and κ = 0 (no reciprocity
+    expectation above balanced exchange);
+  - same_allocation: every archetype gets B = 12.5 and β = 1.2;
+  - same_decay: avoidant agents get the common decay ladder;
+  - average_only: a single average archetype, so the only heterogeneity left is the
+    individual noise of the population sampling;
+  - misperception: baseline plus perception noise σ_p = 0.5.
+base:
+  archetypes:
+    butterfly_c: {base: butterfly, B: 20.0, beta: 0.6, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    loyal_few_c: {base: loyal_few, B: 10.0, beta: 3.0, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    transactional_c: {base: transactional, B: 12.5, beta: 1.2, delta: [0.024, 0.0169, 0.0115, 0.0068]}
+    avoidant_c: {base: avoidant, B: 12.5, beta: 1.2, delta: [0.045, 0.0332, 0.0226, 0.0135]}
+    average_c: {B: 13.75, beta: 1.5, delta: [0.024, 0.0169, 0.0115, 0.0068], nu: 0.065, epsilon: 0.075,
+                rho_star: 0.875, kappa: 0.25, ell: 0.225, tau: 6.125, w: 0.075, alpha: 0.6}
+  population:
+    composition: {butterfly_c: 0.25, loyal_few_c: 0.25, transactional_c: 0.25, avoidant_c: 0.25}
+    size: 100
+    noise: 0.15
+    seed: 0
+  globals:
+    gamma: 0.85
+    a0: 0.5
+    eta: 0.09
+    thresholds: [0.31, 0.60, 0.82]
+  init: {mode: empty}
+  variants: {exploration: ties}
+  simulation:
+    horizon: 1500.0
+    burn_in: 1000.0
+    sample_interval: 25.0
+    record_events: false
+seeds: {range: [0, 5]}
+conditions:
+  baseline: {}
+  no_deficit:
+    archetypes: {transactional_c: {rho_star: 0.8, kappa: 0.0}}
+  same_allocation:
+    archetypes:
+      butterfly_c: {B: 12.5, beta: 1.2}
+      loyal_few_c: {B: 12.5, beta: 1.2}
+  same_decay:
+    archetypes: {avoidant_c: {delta: [0.024, 0.0169, 0.0115, 0.0068]}}
+  average_only:
+    population: {composition: {butterfly_c: 0, loyal_few_c: 0, transactional_c: 0, avoidant_c: 0, average_c: 1.0}}
+  misperception:
+    globals: {sigma_p: 0.5}
+analysis: [layering, layering_by_archetype, asymmetry]

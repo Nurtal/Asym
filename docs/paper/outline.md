@@ -186,7 +186,13 @@ Each section lists what goes in it, which experiment supports it, and its status
     predicts 39 of 40 mean-field cliques (exp 13).
   - It is a regime of scarce budget per partner, not a generic outcome. At
     calibrated budgets, cliques of 8 stay equal even at β = 3.
-  - **The population-level check** is still needed (❌).
+  - Population-level check ✅ (exp 14).
+    - The criterion holds as a gap condition: concentrated agents have a bimodal
+      closeness, and x_c bounds the empty band from below.
+    - Exclusive pairs need scarcity as well. They are absent at calibrated budgets
+      (≤ 4%), and reach 74% of loyal_few agents at B × 0.3.
+    - Present pairing as a scarcity regime enabled by concentration, linked to
+      §5.4.
 
 ### 7 Results III: asymmetry (≈ 1.5 pages) ✅
 - Source: exp 12. **Fig. 9** (❌): the unreciprocated share per counterfactual, plus
@@ -248,7 +254,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 | 2 | ~~Mean-field derivation of the B/δ collapse~~ ✅ done (`docs/theory/maintenance-scaling.md`, exp 13) | | |
 | 3 | **Seeds and populations** | Reviewers expect many more than 3–5 seeds; claims at small N need population draws | rerun exp 06, 07 and 11 with more seeds, a few hours |
 | 4 | **Figures 1–8** | none exist yet; all the data does | plotting script per figure |
-| 5 | **Pairing race at population level** (§6.4) | otherwise drop it or keep it as an observation | 1 experiment |
+| 5 | ~~Pairing race at population level~~ ✅ done (exp 14): a scarcity regime, not generic | | |
 | 6 | **Time-unit mapping** (Hall 2019: hours to make a friend) | needed to compare tie lifetimes with data | modest |
 | 7 | **Sobol on the 5 levers** | optional: quantifies variance shares and interactions | about 450 runs |
 | 8 | **Validation pattern not used in calibration**, beyond the inverse regime: tie turnover (Roy et al. 2022; Wellman et al. 1997) | pattern-oriented validation | 1 experiment |

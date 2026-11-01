@@ -82,9 +82,10 @@ Experiment reports (`docs/experiments/`):
 | 11 | Collapse of layer sizes on the maintenance ratio B/δ (and η) |
 | 12 | Population-level asymmetry and its mechanisms (counterfactuals) |
 | 13 | Checks of the scaling theory (`docs/theory/maintenance-scaling.md`) |
+| 14 | Pairing race in the full population: gap condition, scarcity regime |
 
 Scripts without the YAML harness: `experiments/03_…py`, `04_…py`, `07_…py`, `09_aggregate.py`,
-`10_morris.py`, `11_…py`, `13_…py`, and the calibration tool `experiments/calibrate_layering.py`.
+`10_morris.py`, `11_…py`, `13_…py`, `14_…py`, and the calibration tool `experiments/calibrate_layering.py`.
 
 ## Benchmark
 

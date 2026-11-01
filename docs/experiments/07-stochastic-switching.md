@@ -158,7 +158,10 @@ these small budgets the discrete interactions and the x^β weighting with β < 1
 favour the focal tie.
 
 **5. Neighbourhoods fragment into exclusive pairs, which may be the deeper
-mechanism.** For loyal_few and transactional agents, the stochastic clique never
+mechanism.** *(Qualified by experiment 14: the fragmentation belongs to the
+small budgets of the uncalibrated archetypes. At calibrated budgets, the
+population forms no exclusive pairs, though concentrated agents keep fewer and
+stronger ties.)* For loyal_few and transactional agents, the stochastic clique never
 survives. 42 ties fall to 12, i.e. 6 mutual pairs: every agent ends up with exactly
 one partner. Noise breaks the symmetric neighbourhood, and the rich-get-richer
 allocation (β ≥ 1) concentrates each agent on one tie. The focal outcome is

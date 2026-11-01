@@ -333,6 +333,12 @@ Reading:
   fragmented ran on the uncalibrated archetypes, with smaller budgets. The
   criterion says that the same cliques would not fragment at calibrated budgets.
   This is a prediction for the population-level check.
+- **The population-level check is done (experiment 14).**
+  - The gap condition holds: no maintained ties below x_c, and the antimode lies
+    above it, because the extra feedbacks raise β_eff.
+  - Exclusive pairs appear only when the budget sustains about one strong tie.
+    The criterion predicts where equal sharing breaks; the budget sets how many
+    ties survive.
 
 ## 4. What the derivation does not give
 

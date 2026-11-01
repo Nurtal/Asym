@@ -334,7 +334,7 @@ over many configurations.
 
 **Docking.** As rates are scaled up, ABM ensemble means converge to the
 mean-field. The trajectory error falls from 0.038 to 0.015 to 0.006 as the scale
-goes from 1 to 4 to 16 (`tests/test_09_meanfield.py`). The *embedded-dyad*
+goes from 1 to 4 to 16 (`tests/test_09_meanfield.py`). With 200 runs per scale (experiment 16), the error drops from 0.047 at s = 1 to 0.004 at s = 4. Beyond that it stays at the sampling floor, while the ABM's own spread falls as s^−1/2. The *embedded-dyad*
 analysis applies the mean-field to a focal dyad bridging two cliques of background
 partners (`asym/meanfield/embedded.py`). It gives the deterministic thresholds that
 the stochastic ABM turns into probabilities (experiment 07).

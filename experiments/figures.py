@@ -532,7 +532,52 @@ def fig10(out):
     save(fig, out, "fig10_theory")
 
 
-FIGS = {1: fig1, 2: fig2, 3: fig3, 4: fig4, 5: fig5, 6: fig6, 7: fig7, 8: fig8, 9: fig9, 10: fig10}
+# ------------------------------------------------------------------ Fig. 11
+def fig11(out):
+    d = json.loads((R / "16_docking.json").read_text())
+    fig, axes = plt.subplots(1, 3, figsize=(FULL, 2.4), gridspec_kw={"wspace": 0.38, "width_ratios": [1, 1, 1.15]})
+    dirs = [("ab", "#2a78d6", "a → b"), ("ba", "#e34948", "b → a")]
+    for ax, sc in zip(axes[:2], (1, 16)):
+        row = next(r for r in d if r["regime"] == "sustained" and r["s"] == sc)
+        t = np.array(row["t"])
+        for key, col, lab in dirs:
+            m, sd = np.array(row[f"abm_mean_{key}"]), np.array(row[f"abm_sd_{key}"])
+            ax.fill_between(t, m - sd, m + sd, color=col, alpha=0.15, lw=0)
+            ax.plot(t, m, color=col, lw=1.5, label=f"ABM mean ± SD, {lab}")
+            ax.plot(t, row[f"mf_{key}"], color=INK, lw=1.0, ls=(0, (3, 2)))
+        ax.set_title(f"{'a' if sc == 1 else 'b'}  scale s = {sc}")
+        ax.set_xlabel("time")
+        ax.set_ylim(0, 1)
+    axes[0].set_ylabel("closeness x")
+    axes[0].plot([], [], color=INK, lw=1.0, ls=(0, (3, 2)), label="mean-field")
+    axes[0].legend(fontsize=6.2, loc="lower left")
+
+    ax = axes[2]
+    for regime, mk, col in (("sustained", "o", "#2a78d6"), ("decaying", "s", "#e34948")):
+        rows = sorted((r for r in d if r["regime"] == regime), key=lambda r: r["s"])
+        ss = np.array([r["s"] for r in rows])
+        ax.plot(ss, [r["max_error"] for r in rows], color=col, marker=mk, label=f"max |ABM mean − MF|, {regime}",
+                mec="white", mew=0.5)
+        ax.plot(ss, [np.mean(r["abm_sd_ab"]) for r in rows], color=col, marker=mk, ls=(0, (1, 1.5)), lw=1.2,
+                mfc="white", label=f"ABM SD (time mean), {regime}")
+    ss = np.array([1, 64])
+    floor = [r["sampling_floor"] for r in d if r["regime"] == "sustained"]
+    ax.plot(ss, 0.09 * ss ** -0.5, color=MUTED, lw=0.8)
+    ax.text(1.1, 0.1, "∝ s^−1/2", fontsize=6.6, color=INK2)
+    ax.fill_between(sorted({r["s"] for r in d}), 0, floor, color=GRID, lw=0, label="sampling floor (n = 200)")
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
+    plain_log(ax, "y", [0.001, 0.003, 0.01, 0.03, 0.1])
+    ax.set_xticks([1, 4, 16, 64], ["1", "4", "16", "64"])
+    ax.set_ylim(8e-4, 0.15)
+    ax.set_xlabel("scale s (budget × s, jumps / s)")
+    ax.set_title("c  Convergence")
+    h, l = ax.get_legend_handles_labels()
+    fig.legend(h, l, fontsize=6.6, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.2))
+    save(fig, out, "fig11_docking")
+
+
+FIGS = {1: fig1, 2: fig2, 3: fig3, 4: fig4, 5: fig5, 6: fig6, 7: fig7, 8: fig8, 9: fig9, 10: fig10, 11: fig11}
 
 
 def main():

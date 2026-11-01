@@ -117,7 +117,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 - The PDMP simulation: exact thinning, lazy flow.
 - **The mean-field limit and docking with the ABM** (convergence 0.038 → 0.015 →
   0.006). This is short in the main text; the ODD gives the details. Source:
-  `tests/test_09_meanfield.py`, with a dedicated docking figure (❌).
+  `tests/test_09_meanfield.py`; docking figure ✅ (Fig. 11, exp 16: error 0.047 → 0.004 from s = 1 to 4, then at the sampling floor; ABM spread ∝ s^−1/2).
 - The `exploration: ties` assumption and its justification (§5.3).
 - Full ODD: Appendix A (`docs/odd.md`) ✅.
 
@@ -239,7 +239,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 - A. ODD (`docs/odd.md`) ✅.
 - B. Calibration procedure and the failed quantile step (exp 06) ✅.
 - C. Sensitivity details: factor ranges and full indices (exp 10) ✅.
-- D. Mean-field equations and docking ✅ / 🟡 (the docking figure is missing).
+- D. Mean-field equations and docking ✅ (Fig. 11).
 - E. Scaling theory: Propositions 1–2 and the stability criterion
   (`docs/theory/maintenance-scaling.md`) ✅.
 - Code and data availability: CoMSES deposit plus the GitHub repository (❌).
@@ -253,7 +253,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 | 1 | ~~Asymmetry at population level~~ ✅ done (exp 12); a mean-preserving misperception rerun is still open | | |
 | 2 | ~~Mean-field derivation of the B/δ collapse~~ ✅ done (`docs/theory/maintenance-scaling.md`, exp 13) | | |
 | 3 | **Seeds and populations** | Reviewers expect many more than 3–5 seeds; claims at small N need population draws | rerun exp 06, 07 and 11 with more seeds, a few hours |
-| 4 | Figures 1–10: ✅ drafts (`docs/paper/figures/`, captions in `docs/paper/figures.md`). Fig. 5 and 9 will be redrawn from exp 15. The docking figure is still missing | | |
+| 4 | Figures 1–10: ✅ drafts (`docs/paper/figures/`, captions in `docs/paper/figures.md`). Fig. 5 and 9 will be redrawn from exp 15. Docking: Fig. 11 | | |
 | 5 | ~~Pairing race at population level~~ ✅ done (exp 14): a scarcity regime, not generic | | |
 | 6 | **Time-unit mapping** (Hall 2019: hours to make a friend) | needed to compare tie lifetimes with data | modest |
 | 7 | **Sobol on the 5 levers** | optional: quantifies variance shares and interactions | about 450 runs |

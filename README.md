@@ -83,6 +83,8 @@ Experiment reports (`docs/experiments/`):
 | 12 | Population-level asymmetry and its mechanisms (counterfactuals) |
 | 13 | Checks of the scaling theory (`docs/theory/maintenance-scaling.md`) |
 | 14 | Pairing race in the full population: gap condition, scarcity regime |
+| 15 | Robustness across seeds and population draws |
+| 16 | Docking: ABM ensemble mean versus mean-field as rates scale up |
 
 Scripts without the YAML harness: `experiments/03_…py`, `04_…py`, `07_…py`, `09_aggregate.py`,
 `10_morris.py`, `11_…py`, `13_…py`, `14_…py`, and the calibration tool `experiments/calibrate_layering.py`.

@@ -139,8 +139,12 @@ that keep η fixed (B, δ, mixed):
   simulation noise, so the collapse may be tighter than measured.
 - The ranges stay within the normal regime (μ > 0 everywhere). The collapse was not
   tested across the inverse regime.
-- This is an empirical collapse, not a derivation. A mean-field argument would be
-  needed. In the steady state of a maintained tie, ηA(1 − x) = δx, with A ∝ B, so
+- ~~This is an empirical collapse, not a derivation.~~ **Derived since then** in
+  `docs/theory/maintenance-scaling.md` (experiment 13). In the mean-field, B, η and δ
+  enter the steady state only through ηB/δ, apart from the corrections κ/δ and
+  o0/B. At a fixed mean, the noise of a tie depends on η alone. This explains
+  both why B and δ are exchangeable and why η deviates at the tails. The original
+  sketch follows. In the steady state of a maintained tie, ηA(1 − x) = δx, with A ∝ B, so
   the closeness of a maintained tie depends on ηB/δ. The circle thresholds then
   turn that into layer counts. The derivation would explain why η deviates through
   the discreteness of jumps.

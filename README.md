@@ -16,6 +16,7 @@ The model has two levels of description:
 Domain vocabulary: [`CONTEXT.md`](CONTEXT.md). Equations: [`docs/model-spec.md`](docs/model-spec.md).
 ODD description: [`docs/odd.md`](docs/odd.md). Decisions: [`docs/adr/`](docs/adr/).
 Literature: [`docs/research/literature-review.md`](docs/research/literature-review.md).
+Scaling theory (why layers collapse on B/δ): [`docs/theory/maintenance-scaling.md`](docs/theory/maintenance-scaling.md).
 
 ## Install
 
@@ -80,9 +81,10 @@ Experiment reports (`docs/experiments/`):
 | 10 | Morris sensitivity screening |
 | 11 | Collapse of layer sizes on the maintenance ratio B/δ (and η) |
 | 12 | Population-level asymmetry and its mechanisms (counterfactuals) |
+| 13 | Checks of the scaling theory (`docs/theory/maintenance-scaling.md`) |
 
 Scripts without the YAML harness: `experiments/03_…py`, `04_…py`, `07_…py`, `09_aggregate.py`,
-`10_morris.py`, `11_…py`, and the calibration tool `experiments/calibrate_layering.py`.
+`10_morris.py`, `11_…py`, `13_…py`, and the calibration tool `experiments/calibrate_layering.py`.
 
 ## Benchmark
 

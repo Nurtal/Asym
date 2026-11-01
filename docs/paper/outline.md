@@ -144,7 +144,13 @@ Each section lists what goes in it, which experiment supports it, and its status
   against q for the four routes.
   - B and δ are exchangeable (R² ≥ 0.985 for every layer).
   - η deviates at the two ends, through the jump size.
-  - Add the mean-field argument (❌, see §6).
+  - Mean-field argument ✅ (`docs/theory/maintenance-scaling.md`, exp 13):
+    - Proposition 1: the stationary state depends on Q = ηB/δ, with the corrections
+      K = κ/δ and o0/B. These corrections explain the B-versus-δ gaps.
+    - Proposition 2: at a fixed mean, Var x = (η/2) x(1−x)²/(1 − β_eff(1−x)),
+      independent of B and δ. η therefore sets the tails, and all 24 sign
+      comparisons of exp 11 agree. Widening the noise alone gives about 70% of the
+      η excess on the inner circle.
 - **5.3 Population size and exposure.** Source: exp 02, 05 ✅. **Fig. 6** (❌):
   outer layer versus N under baseline and tie-only exploration.
   - Inner circle budget-bound; outer layer exposure-bound.
@@ -175,8 +181,12 @@ Each section lists what goes in it, which experiment supports it, and its status
   - all-or-nothing;
   - slow burn then late breakup.
 - **6.4 Pairing race** (🟡): cliques of concentrated agents fragment into exclusive
-  pairs; the symmetric neighbourhood is unstable. **Needs the population-level
-  check** before it can be claimed beyond cliques (❌).
+  pairs; the symmetric neighbourhood is unstable.
+  - Criterion derived ✅: equal sharing is unstable iff β_eff(1 − x) > 1. It
+    predicts 39 of 40 mean-field cliques (exp 13).
+  - It is a regime of scarce budget per partner, not a generic outcome. At
+    calibrated budgets, cliques of 8 stay equal even at β = 3.
+  - **The population-level check** is still needed (❌).
 
 ### 7 Results III: asymmetry (≈ 1.5 pages) ✅
 - Source: exp 12. **Fig. 9** (❌): the unreciprocated share per counterfactual, plus
@@ -224,6 +234,8 @@ Each section lists what goes in it, which experiment supports it, and its status
 - B. Calibration procedure and the failed quantile step (exp 06) ✅.
 - C. Sensitivity details: factor ranges and full indices (exp 10) ✅.
 - D. Mean-field equations and docking ✅ / 🟡 (the docking figure is missing).
+- E. Scaling theory: Propositions 1–2 and the stability criterion
+  (`docs/theory/maintenance-scaling.md`) ✅.
 - Code and data availability: CoMSES deposit plus the GitHub repository (❌).
 
 ---
@@ -233,7 +245,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 | # | Item | Why | Cost |
 |---|---|---|---|
 | 1 | ~~Asymmetry at population level~~ ✅ done (exp 12); a mean-preserving misperception rerun is still open | | |
-| 2 | **Mean-field derivation of the B/δ collapse** (§5.2) | Gives the paper its analytical result and explains the η deviation | analytical work plus a check |
+| 2 | ~~Mean-field derivation of the B/δ collapse~~ ✅ done (`docs/theory/maintenance-scaling.md`, exp 13) | | |
 | 3 | **Seeds and populations** | Reviewers expect many more than 3–5 seeds; claims at small N need population draws | rerun exp 06, 07 and 11 with more seeds, a few hours |
 | 4 | **Figures 1–8** | none exist yet; all the data does | plotting script per figure |
 | 5 | **Pairing race at population level** (§6.4) | otherwise drop it or keep it as an observation | 1 experiment |

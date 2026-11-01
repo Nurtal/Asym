@@ -107,7 +107,7 @@ Each section lists what goes in it, which experiment supports it, and its status
   different aim, inference rather than mechanism.
 
 ### 3 Model (≈ 3 pages + ODD in an appendix) ✅
-- Overview figure (**Fig. 1**, ❌): the agent, a directed tie (x, r, o, circle),
+- Overview figure (**Fig. 1**, ✅ draft): the agent, a directed tie (x, r, o, circle),
   the invitation life cycle (accept / decline / silence / late accept / cancel),
   and the circle hysteresis with circle-dependent decay.
 - Core equations: the flow of x (decay by circle, deficit erosion), the
@@ -125,11 +125,11 @@ Each section lists what goes in it, which experiment supports it, and its status
 - **Calibration target** (pattern 1): layer ratios ≈ 3, using the thresholds and
   the rescaled budget and decay. Say explicitly that the ratios are calibrated, not
   predicted. Source: exp 02, 06 ✅.
-  - **Fig. 2** (❌): cumulative layers versus N = 100/200/400 (exp 06), with the
+  - **Fig. 2** (✅ draft): cumulative layers versus N = 100/200/400 (exp 06), with the
     per-archetype layers inset.
 - Stationarity and independence of the start (pattern 3). Source: exp 01, 01b ✅.
   The empty and random starts agree within 2–6%.
-- **Bimodal closeness distribution** (**Fig. 3**, 🟡: the histogram from exp 05 at
+- **Bimodal closeness distribution** (**Fig. 3**, ✅ draft;: the histogram from exp 05 at
   N = 200 exists as numbers only). The self-sustaining inner circle explains why θ4
   cannot sit above the high mode (the calibration step that failed, exp 06). Present
   it as a **testable prediction** that contrasts with the monotone distribution of
@@ -137,10 +137,10 @@ Each section lists what goes in it, which experiment supports it, and its status
 
 ### 5 Results I: what sets size and shape (≈ 3 pages)
 - **5.1 Sensitivity screening** (Morris, 18 factors). Source: exp 10 ✅.
-  **Fig. 4** (❌): μ* versus σ for the main outputs.
+  **Fig. 4** (✅ draft): μ* versus σ for the main outputs.
   - Size: B, η and δ. Shape: β. Outer layer: ν. One-sided ties: ρ*.
   - Negligible: loyalty, patience, memory, a, x0.
-- **5.2 The maintenance ratio.** Source: exp 11 ✅. **Fig. 5** (❌): layer sizes
+- **5.2 The maintenance ratio.** Source: exp 11 ✅. **Fig. 5** (✅ draft): layer sizes
   against q for the four routes.
   - B and δ are exchangeable (R² ≥ 0.985 for every layer).
   - η deviates at the two ends, through the jump size.
@@ -151,13 +151,13 @@ Each section lists what goes in it, which experiment supports it, and its status
       independent of B and δ. η therefore sets the tails, and all 24 sign
       comparisons of exp 11 agree. Widening the noise alone gives about 70% of the
       η excess on the inner circle.
-- **5.3 Population size and exposure.** Source: exp 02, 05 ✅. **Fig. 6** (❌):
+- **5.3 Population size and exposure.** Source: exp 02, 05 ✅. **Fig. 6** (✅ draft):
   outer layer versus N under baseline and tie-only exploration.
   - Inner circle budget-bound; outer layer exposure-bound.
   - Layers are N-independent only if tie formation does not scale with N.
   - This explains the N = 500 retuning in Sutcliffe et al.
 - **5.4 Inverse regime (pattern 2, not used in calibration).** Source: exp 08, 09 ✅.
-  **Fig. 7** (❌): μ against resources per alter B̄/(N−1).
+  **Fig. 7** (✅ draft): μ against resources per alter B̄/(N−1).
   - The N-route and the B-route collapse.
   - The sign change is near 0.5.
   - Profile ordering: butterfly < loyal_few < avoidant ≈ transactional.
@@ -170,7 +170,7 @@ Each section lists what goes in it, which experiment supports it, and its status
   - **Rename** "embedded dyad" (Burt's *embeddedness* means the opposite), for
     example to "dyad in a competing neighbourhood".
 - **6.2 Noise turns thresholds into probabilities.** Source: exp 07 ✅. **Fig. 8**
-  (❌): P(friendship at the end) against x0 for loyal_few, avoidant and
+  (✅ draft): P(friendship at the end) against x0 for loyal_few, avoidant and
   transactional, with the mean-field separatrix marked.
   - The 50% point coincides with the mean-field separatrix.
   - Mean-field-stable friendships of avoidant and transactional agents break
@@ -195,7 +195,7 @@ Each section lists what goes in it, which experiment supports it, and its status
       §5.4.
 
 ### 7 Results III: asymmetry (≈ 1.5 pages) ✅
-- Source: exp 12. **Fig. 9** (❌): the unreciprocated share per counterfactual, plus
+- Source: exp 12. **Fig. 9** (✅ draft): the unreciprocated share per counterfactual, plus
   a heatmap of the unreciprocated share by ordered archetype pair.
 - **About 24–28% of friendship nominations are unreciprocated.** They are
   concentrated on nominations of partners with high reciprocity expectations
@@ -253,7 +253,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 | 1 | ~~Asymmetry at population level~~ ✅ done (exp 12); a mean-preserving misperception rerun is still open | | |
 | 2 | ~~Mean-field derivation of the B/δ collapse~~ ✅ done (`docs/theory/maintenance-scaling.md`, exp 13) | | |
 | 3 | **Seeds and populations** | Reviewers expect many more than 3–5 seeds; claims at small N need population draws | rerun exp 06, 07 and 11 with more seeds, a few hours |
-| 4 | **Figures 1–8** | none exist yet; all the data does | plotting script per figure |
+| 4 | Figures 1–10: ✅ drafts (`docs/paper/figures/`, captions in `docs/paper/figures.md`). Fig. 5 and 9 will be redrawn from exp 15. The docking figure is still missing | | |
 | 5 | ~~Pairing race at population level~~ ✅ done (exp 14): a scarcity regime, not generic | | |
 | 6 | **Time-unit mapping** (Hall 2019: hours to make a friend) | needed to compare tie lifetimes with data | modest |
 | 7 | **Sobol on the 5 levers** | optional: quantifies variance shares and interactions | about 450 runs |

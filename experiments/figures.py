@@ -326,7 +326,8 @@ def fig5(out):
         ax.set_title(title, fontsize=8)
         ax.set_xlabel("q  (Q = ηB/δ × q)")
     axes[0].set_ylabel("per agent")
-    axes[0].legend(fontsize=6.6, loc="upper left")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=7, loc="upper center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.04))
     fig.suptitle(f"Maintenance collapse: four routes to the same Q ({n_runs} runs; bars: range over runs)",
                  x=0.01, ha="left", fontsize=8.5, color=INK2, y=1.04)
     save(fig, out, "fig5_collapse")
@@ -438,26 +439,37 @@ def fig8(out):
 
 
 # ------------------------------------------------------------------- Fig. 9
+def _draw_mean_ci(values_by_draw):
+    """Mean over population draws and the half-width of its 95% t-interval."""
+    from scipy import stats
+    means = np.array([np.mean(v) for v in values_by_draw.values()])
+    half = stats.t.ppf(0.975, len(means) - 1) * means.std(ddof=1) / np.sqrt(len(means))
+    return float(means.mean()), float(half)
+
+
 def fig9(out):
     a = json.loads((R / "asymmetry_mechanisms/analysis.json").read_text())["asymmetry"]["conditions"]
-    rob = R / "15_robustness/runs.jsonl"
+    rows = [json.loads(line) for line in (R / "15_robustness/runs.jsonl").read_text().splitlines() if line.strip()]
     order = [("baseline", "baseline"), ("no_deficit", "no expectation gap"), ("same_decay", "no decay gap"),
-             ("same_allocation", "no budget/β gap"), ("misperception", "+ perception noise*"),
+             ("same_allocation", "no budget/β gap"), ("misperception_centred", "+ perception noise (mean 1)"),
              ("average_only", "no profiles (noise only)")]
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(FULL, 2.8), gridspec_kw={"width_ratios": [1.2, 1], "wspace": 0.75})
     y = np.arange(len(order))[::-1]
     for yi, (key, lab) in zip(y, order):
-        m, lo, hi = ci_err(a[key]["unreciprocated"])
+        block, cond = ("layers", "n100") if key == "baseline" else ("asymmetry", key)
+        by_draw = {}
+        for r in rows:
+            if r["block"] == block and r["cond"] == cond:
+                by_draw.setdefault(r["pop"], []).append(r["unreciprocated"])
+        m, h = _draw_mean_ci(by_draw)
         ax.barh(yi, m, height=0.55, color=LAYER_RAMP[1] if key == "baseline" else "#86b6ef", ec="white")
-        ax.errorbar(m, yi, xerr=[[lo], [hi]], color=INK, capsize=2, lw=0.9)
-        ax.text(m + hi + 0.008, yi, f"{m:.2f}", va="center", fontsize=7, color=INK)
+        ax.errorbar(m, yi, xerr=h, color=INK, capsize=2, lw=0.9)
+        ax.text(m + h + 0.008, yi, f"{m:.2f}", va="center", fontsize=7, color=INK)
     ax.set_yticks(y, [lab for _, lab in order])
     ax.set_xlabel("share of friendship nominations not reciprocated")
-    ax.set_title("a  Counterfactuals (N = 100, 5 seeds)")
+    ax.set_title("a  Counterfactuals (N = 100; CI over draws)")
     ax.grid(axis="y", visible=False)
     ax.set_xlim(0, 0.36)
-    ax.text(0, -0.32, "* biased: raises perceived reciprocity on average", transform=ax.transAxes, fontsize=6.4,
-            color=INK2)
 
     gs = ["butterfly_c", "loyal_few_c", "transactional_c", "avoidant_c"]
     M = np.full((4, 4), np.nan)
@@ -480,7 +492,7 @@ def fig9(out):
     bx.set_xlabel("nominated (alter)")
     bx.set_ylabel("nominating (ego)", labelpad=2)
     bx.grid(False)
-    bx.set_title("b  Not reciprocated, by pair")
+    bx.set_title("b  Not reciprocated, by pair (one draw)")
     cb = fig.colorbar(im, ax=bx, fraction=0.046, pad=0.04)
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=6.5)

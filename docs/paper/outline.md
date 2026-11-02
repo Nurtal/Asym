@@ -142,7 +142,9 @@ Each section lists what goes in it, which experiment supports it, and its status
   - Negligible: loyalty, patience, memory, a, x0.
 - **5.2 The maintenance ratio.** Source: exp 11 ✅. **Fig. 5** (✅ draft): layer sizes
   against q for the four routes.
-  - B and δ are exchangeable (R² ≥ 0.985 for every layer).
+  - B and δ collapse to first order: q explains ≥ 0.98 of the variance of log(layer), in each
+    of 2 population draws (exp 15). The gaps are systematic, up to about 30% at q = ½ with the
+    same sign in both draws, so do not write "exchangeable" without this qualification.
   - η deviates at the two ends, through the jump size.
   - Mean-field argument ✅ (`docs/theory/maintenance-scaling.md`, exp 13):
     - Proposition 1: the stationary state depends on Q = ηB/δ, with the corrections
@@ -150,11 +152,14 @@ Each section lists what goes in it, which experiment supports it, and its status
     - Proposition 2: at a fixed mean, Var x = (η/2) x(1−x)²/(1 − β_eff(1−x)),
       independent of B and δ. η therefore sets the tails, and all 24 sign
       comparisons of exp 11 agree. Widening the noise alone gives about 70% of the
-      η excess on the inner circle.
+      η excess on the inner circle. The 24 comparisons hold in each draw separately (exp 15).
 - **5.3 Population size and exposure.** Source: exp 02, 05 ✅. **Fig. 6** (✅ draft):
   outer layer versus N under baseline and tie-only exploration.
   - Inner circle budget-bound; outer layer exposure-bound.
   - Layers are N-independent only if tie formation does not scale with N.
+  - Qualification (exp 15): N = 100 is a finite-size case. From N = 100 to 200, +close falls by
+    13%, +friends by 7% and all ties rise by 9%; butterflies hold 88 of 99 possible alters at
+    N = 100. Independence from N = 200 to 400 still rests on one draw (exp 06).
   - This explains the N = 500 retuning in Sutcliffe et al.
 - **5.4 Inverse regime (pattern 2, not used in calibration).** Source: exp 08, 09 ✅.
   **Fig. 7** (✅ draft): μ against resources per alter B̄/(N−1).
@@ -190,27 +195,29 @@ Each section lists what goes in it, which experiment supports it, and its status
     - The criterion holds as a gap condition: concentrated agents have a bimodal
       closeness, and x_c bounds the empty band from below.
     - Exclusive pairs need scarcity as well. They are absent at calibrated budgets
-      (≤ 4%), and reach 74% of loyal_few agents at B × 0.3.
+      (≤ 5%), and reach 73–74% of loyal_few agents at B × 0.3 (exp 14, exp 15).
     - Present pairing as a scarcity regime enabled by concentration, linked to
       §5.4.
 
 ### 7 Results III: asymmetry (≈ 1.5 pages) ✅
-- Source: exp 12. **Fig. 9** (✅ draft): the unreciprocated share per counterfactual, plus
+- Source: exp 12, exp 15. **Fig. 9** (✅ draft): the unreciprocated share per counterfactual, plus
   a heatmap of the unreciprocated share by ordered archetype pair.
-- **About 24–28% of friendship nominations are unreciprocated.** They are
+- **About 26–27% of friendship nominations are unreciprocated** (0.257 ± 0.021 at
+  N = 100, 0.271 ± 0.023 at N = 200; intervals over population draws). They are
   concentrated on nominations of partners with high reciprocity expectations
-  (butterfly → transactional 0.63–0.71) or fast-eroding ties (butterfly →
-  avoidant 0.53).
-- Counterfactuals:
-  - removing the expectation gap halves the share (0.276 → 0.122);
-  - removing the decay gap lowers it to 0.182, on different pairs;
-  - removing the allocation mismatch has a minor, mixed effect (0.222);
-  - the individual-noise floor is 0.067.
+  (butterfly → transactional 0.67 ± 0.08) or fast-eroding ties (butterfly →
+  avoidant 0.51 ± 0.04).
+- Counterfactuals (exp 15, difference from baseline paired by draw):
+  - removing the expectation gap halves the share (−0.133 ± 0.030);
+  - removing the decay gap lowers it, on different pairs (−0.093 ± 0.006);
+  - removing the allocation mismatch has a minor, mixed effect (−0.053 ± 0.004);
+  - the individual-noise floor is 0.064 ± 0.018;
+  - mean-preserving perception noise adds little (+0.017 ± 0.007).
 - Comparison with Almaatouq et al. 2016 (about 0.5): the direction and order of
   magnitude agree. The model makes a *pair-level* prediction: who is left
   unreciprocated.
-- Follow-up: the misperception condition is confounded (perception mean > 1), so
-  it needs a mean-preserving rerun.
+- The misperception confound of exp 12 is resolved (exp 15): its fall came from the bias
+  in mean perception, not from the noise.
 
 ### 8 Discussion (≈ 2 pages)
 - What a dynamical model adds to Tamarit:
@@ -250,10 +257,10 @@ Each section lists what goes in it, which experiment supports it, and its status
 
 | # | Item | Why | Cost |
 |---|---|---|---|
-| 1 | ~~Asymmetry at population level~~ ✅ done (exp 12); a mean-preserving misperception rerun is still open | | |
+| 1 | ~~Asymmetry at population level~~ ✅ done (exp 12, with the mean-preserving rerun in exp 15) | | |
 | 2 | ~~Mean-field derivation of the B/δ collapse~~ ✅ done (`docs/theory/maintenance-scaling.md`, exp 13) | | |
-| 3 | **Seeds and populations** | Reviewers expect many more than 3–5 seeds; claims at small N need population draws | rerun exp 06, 07 and 11 with more seeds, a few hours |
-| 4 | Figures 1–10: ✅ drafts (`docs/paper/figures/`, captions in `docs/paper/figures.md`). Fig. 5 and 9 will be redrawn from exp 15. Docking: Fig. 11 | | |
+| 3 | ~~Seeds and populations~~ ✅ done for exp 06, 11, 12 and 14 (exp 15). Not covered: exp 07, Morris, N = 400 | | |
+| 4 | Figures 1–10: ✅ drafts (`docs/paper/figures/`, captions in `docs/paper/figures.md`). Fig. 5 and 9 are drawn from exp 15. Docking: Fig. 11 | | |
 | 5 | ~~Pairing race at population level~~ ✅ done (exp 14): a scarcity regime, not generic | | |
 | 6 | **Time-unit mapping** (Hall 2019: hours to make a friend) | needed to compare tie lifetimes with data | modest |
 | 7 | **Sobol on the 5 levers** | optional: quantifies variance shares and interactions | about 450 runs |
@@ -269,3 +276,5 @@ Each section lists what goes in it, which experiment supports it, and its status
 - The mean-field and the ABM disagree for small budgets (butterflies, exp 07). The
   mean-field gives thresholds, not probabilities.
 - Single-seed Morris: only the top factors are ranked reliably.
+- The population draw explains most of the run-to-run variance (exp 15). Report intervals
+  over draws; intervals over the seeds of one draw are too narrow.

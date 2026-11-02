@@ -20,7 +20,7 @@ Blocks:
 - ``pairing``: key cells of exp 14, the mixed population with 4 draws × 2 seeds and
   the homogeneous cells with 2 draws × 2 seeds.
 
-    python experiments/15_robustness.py run [--blocks layers asymmetry collapse pairing] [--workers 8]
+    python experiments/15_robustness.py run [--blocks layers asymmetry collapse pairing] [--workers 1]
     python experiments/15_robustness.py report > results/15_robustness/report.md
 
 Runs are appended to ``results/15_robustness/runs.jsonl`` as they finish. A rerun
@@ -187,19 +187,38 @@ def summarise(rows, get):
     between = max(0.0, float(means.var(ddof=1)) - w / k) if n > 1 and np.isfinite(w) else math.nan
     share = between / (between + w) if np.isfinite(between) and (between + w) > 0 else math.nan
     return {"mean": mean, "half": half, "n_pop": n, "seed_sd": math.sqrt(w) if np.isfinite(w) else math.nan,
-            "pop_share": share}
+            "pop_share": share, "draws": means.tolist()}
 
 
 def fmt(s, digits=3):
+    """Mean ± 95% half-width. With two draws the t-interval is uninformative
+    (t = 12.7), so the two draw means are shown instead."""
     if s is None:
         return "—"
+    if s["n_pop"] == 2:
+        a, b = s["draws"]
+        return f"{s['mean']:.{digits}g} [{a:.{digits}g}, {b:.{digits}g}]"
     return f"{s['mean']:.{digits}g} ± {s['half']:.2g}"
 
 
 def fmt_full(s, digits=3):
     if s is None:
         return "— | — | —"
-    return f"{s['mean']:.{digits}g} ± {s['half']:.2g} | {s['seed_sd']:.2g} | {s['pop_share']:.2f}"
+    return f"{fmt(s, digits)} | {s['seed_sd']:.2g} | {s['pop_share']:.2f}"
+
+
+def paired_difference(rows, rows_base, get):
+    """Per-draw difference from the baseline over the draws they share: mean, 95%
+    half-width, p of a one-sample t-test."""
+    def draws(rs):
+        by = {}
+        for r in rs:
+            by.setdefault(r["pop"], []).append(get(r))
+        return {p: float(np.mean(v)) for p, v in by.items()}
+    a, b = draws(rows), draws(rows_base)
+    d = np.array([a[p] - b[p] for p in sorted(a) if p in b])
+    half = float(stats.t.ppf(0.975, len(d) - 1) * d.std(ddof=1) / math.sqrt(len(d)))
+    return float(d.mean()), half, float(stats.ttest_1samp(d, 0.0).pvalue)
 
 
 def cmd_report(_):
@@ -261,11 +280,22 @@ def cmd_report(_):
         print(f"| {c} | {fmt_full(summarise(rs, lambda r: r['unreciprocated']))} | "
               f"{fmt(summarise(rs, lambda r: r['correlation']))} | " + " | ".join(pcells) + " |")
     print()
+    base = by("layers", "n100")
+    conds = [c for c in ["no_deficit", "same_allocation", "same_decay", "average_only", "misperception",
+                         "misperception_centred"] if by("asymmetry", c)]
+    if base and conds:
+        print("Unreciprocated share, difference from the baseline paired by population draw:\n")
+        print("| condition | difference ± CI | p |\n|---|---|---|")
+        for c in conds:
+            m, h, p = paired_difference(by("asymmetry", c), base, lambda r: r["unreciprocated"])
+            print(f"| {c} | {m:+.3f} ± {h:.3f} | {p:.2g} |")
+        print()
 
     m11 = _load("m11", "11_maintenance_collapse.py")
     col = [r for r in rows if r["block"] == "collapse"]
     if col:
         print("## 3. Maintenance collapse (exp 11)\n")
+        print("Two draws: each cell gives the mean and, in brackets, the mean of each draw.\n")
         outs = [("inner", lambda r: r["layers"][0]), ("+close", lambda r: r["layers"][1]),
                 ("+friends", lambda r: r["layers"][2]), ("all", lambda r: r["layers"][3]),
                 ("μ", lambda r: r["mu"]), ("high-mode share", lambda r: r["high"])]
@@ -292,6 +322,23 @@ def cmd_report(_):
                 cells.append(f"{bet / tot:.3f}")
             print(f"| {nm} | " + " | ".join(cells) + " |")
         print()
+        print("Exchangeability of the routes: log(layer under route / layer under B), per draw "
+              "(draw 0, draw 1). R² hides these gaps, which are systematic.\n")
+        for route in ("delta", "eta"):
+            print(f"### {route} against B\n\n| q | " + " | ".join(names) + " |\n|---|" + "---|" * len(names))
+            for q in m11.QS:
+                if q == 1.0:
+                    continue
+                cells = []
+                for k in range(len(names)):
+                    logs = []
+                    for p in (0, 1):
+                        val = lambda rt: np.mean([r["layers"][k] for r in col  # noqa: E731, B023
+                                                  if abs(r["q"] - q) < 1e-9 and r["route"] == rt and r["pop"] == p])
+                        logs.append(math.log(val(route) / val("B")))
+                    cells.append(f"{logs[0]:+.2f}, {logs[1]:+.2f}")
+                print(f"| {q:.2f} | " + " | ".join(cells) + " |")
+            print()
 
     pr = [r for r in rows if r["block"] == "pairing"]
     if pr:
@@ -310,7 +357,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "report"])
     ap.add_argument("--blocks", nargs="+", default=["layers", "asymmetry", "collapse", "pairing"])
-    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--workers", type=int, default=1)
     a = ap.parse_args()
     {"run": cmd_run, "report": cmd_report}[a.cmd](a)
 

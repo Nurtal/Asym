@@ -64,8 +64,8 @@ def base_config(k=1.0):
 
 def measure(args):
     from asym.abm.engine import simulate
-    seed, k = args if isinstance(args, tuple) else (args, 1.0)
-    res = simulate(base_config(k), seed=seed)
+    seed, scale = args
+    res = simulate(base_config(scale), seed=seed)
     ids = {a: k for k, a in enumerate(res.agent_ids)}
     N = len(ids)
     T0, T1 = WINDOW
@@ -125,31 +125,37 @@ def measure(args):
                 ts = np.array(dyad_int[d])
                 k = int(((ts >= created[key]) & (ts <= e["t"])).sum())
                 reach[e["to"]].append((k, e["t"] - created[key]))
-    # liability of newness: survival of ties created in the window
-    forgotten = {}
-    for e in ev:
-        if e["type"] == "forget":
-            forgotten.setdefault((ids[e["i"]], ids[e["j"]]), e["t"])
-    lifetimes = []
-    for key, t0 in created.items():
-        if T0 <= t0 < T1 - 200:
-            tf = forgotten.get(key)
-            lifetimes.append(tf - t0 if tf is not None and tf > t0 else math.inf)
-    return {"seed": seed, "k": k, "per_agent_rate": float(per_agent_rate), "layer_rates": layer_rates,
+    lifetimes = tie_lifetimes(ev, T0, T1 - 200)
+    return {"seed": seed, "k": scale, "per_agent_rate": float(per_agent_rate), "layer_rates": layer_rates,
             "retention": {k: [sum(a for a, _ in v), sum(b for _, b in v)] for k, v in retention.items()},
-            "reach": {str(k): v for k, v in reach.items()}, "lifetimes": [x if np.isfinite(x) else -1 for x in lifetimes]}
+            "reach": {str(k): v for k, v in reach.items()}, "lifetimes": lifetimes}
+
+
+def tie_lifetimes(events, t0, t1):
+    """Lifetime of every directed tie created in [t0, t1), -1 if it was still alive at
+    the end of the log. A tie forgotten and met again counts as two ties. ``events`` is
+    in chronological order."""
+    alive = {}
+    out = []
+    for e in events:
+        key = (e["i"], e["j"])
+        if e["type"] == "tie_created":
+            if t0 <= e["t"] < t1:
+                alive[key] = len(out)
+                out.append((e["t"], -1))
+            else:
+                alive.pop(key, None)
+        elif e["type"] == "forget" and key in alive:
+            n = alive.pop(key)
+            out[n] = (out[n][0], e["t"] - out[n][0])
+    return [life for _, life in out]
 
 
 def cmd_run(a):
-    if a.k == 1.0:
-        with ProcessPoolExecutor(min(a.seeds, 4)) as ex:
-            out = list(ex.map(measure, range(a.seeds)))
-        OUT.write_text(json.dumps(out))
-    else:
-        path = OUT.with_name(f"17_time_mapping_k{a.k:g}.json")
-        with ProcessPoolExecutor(min(a.seeds, 4)) as ex:
-            out = list(ex.map(measure, [(s, a.k) for s in range(a.seeds)]))
-        path.write_text(json.dumps(out))
+    path = OUT if a.k == 1.0 else OUT.with_name(f"17_time_mapping_k{a.k:g}.json")
+    with ProcessPoolExecutor(a.workers) as ex:
+        out = list(ex.map(measure, [(s, a.k) for s in range(a.seeds)]))
+    path.write_text(json.dumps(out))
 
 
 def cmd_report(_):
@@ -263,6 +269,7 @@ def main():
     ap.add_argument("cmd", choices=["run", "report"])
     ap.add_argument("--seeds", type=int, default=2)
     ap.add_argument("--k", type=float, default=1.0, help="granularity factor (B × k, η / k)")
+    ap.add_argument("--workers", type=int, default=1, help="event logs are held in memory: raise with care")
     a = ap.parse_args()
     {"run": cmd_run, "report": cmd_report}[a.cmd](a)
 

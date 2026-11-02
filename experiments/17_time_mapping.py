@@ -6,24 +6,22 @@ population of experiment 06 (N = 100, random start as in experiment 10, window
 300–700, events recorded). If the anchors agree, the mapping is credible; their
 spread is the uncertainty.
 
-Anchors (docs/theory/time-mapping.md gives the sources):
+Anchors (docs/experiments/17-time-mapping.md gives the sources and their status):
 
-- **C. Minimum contact frequency per layer** (Dunbar 2025, after Sutcliffe et al.
-  2012): at least weekly for the 5-layer, monthly for the 15-layer. The model's
-  cumulative layers are about 2.4 / 5.3 / 15 / 45, so the 5-layer corresponds to
-  close + inner and the 15-layer to friends and above. "Minimum" is read as the
-  10th percentile of the per-tie contact rate in that layer.
+- **C. Minimum contact frequency per layer**: at least weekly for the 5-layer, monthly
+  for the 15-layer. The model's cumulative layers are about 2 / 6 / 16 / 40, so the
+  5-layer corresponds to close + inner and the 15-layer to friends and above. "Minimum"
+  is read as the 10th percentile of the per-tie contact rate in that layer.
 - **T. Turnover**:
-  - innermost 5-layer, about one member replaced per 10 years, i.e. about 2% per
-    member per year (Roy et al. 2022, via Dunbar 2025);
-  - outer layers, up to 30% per year (Saramäki et al. 2014; Kempnich et al. 2024).
-- **H. Hours to friendship** (Hall 2019): about 80–100 h together to become a
-  friend, 200+ h for a good friend. This maps interactions to *hours* of
-  interaction, not calendar time. It is combined with the calendar mapping into a
-  sanity check: weekly social hours per agent.
-- **B. Liability of newness** (Burt 2002): about 90% of new bridge relations are
-  gone within a year. This is a weak anchor, because bridges among colleagues are
-  not the same as new acquaintances.
+  - inner layers, 1-4% of alters per year (Roy et al. 2022), 2% used here;
+  - outer layers, at most 30% per year. This is a convention and an upper bound, so
+    the mapping it gives is an upper bound too.
+- **H. Hours to friendship** (Hall 2019): about 90 h together to become a friend. This
+  maps interactions to *hours* of interaction, not calendar time. It is combined with
+  the calendar mapping into a sanity check: weekly social hours per agent.
+- **B. Liability of newness** (Burt 2002): about 90% of new bridge relations are gone
+  within a year. This is a weak anchor, because bridges among colleagues are not the
+  same as new acquaintances.
 
     python experiments/17_time_mapping.py run [--seeds 2]
     python experiments/17_time_mapping.py report > results/17_time_mapping.md
@@ -64,6 +62,7 @@ def base_config(k=1.0):
 
 def measure(args):
     from asym.abm.engine import simulate
+    from asym.experiments import layering_per_run
     seed, scale = args
     res = simulate(base_config(scale), seed=seed)
     ids = {a: k for k, a in enumerate(res.agent_ids)}
@@ -126,7 +125,8 @@ def measure(args):
                 k = int(((ts >= created[key]) & (ts <= e["t"])).sum())
                 reach[e["to"]].append((k, e["t"] - created[key]))
     lifetimes = tie_lifetimes(ev, T0, T1 - 200)
-    return {"seed": seed, "k": scale, "per_agent_rate": float(per_agent_rate), "layer_rates": layer_rates,
+    return {"seed": seed, "k": scale, "layers": layering_per_run(res).tolist(),
+            "per_agent_rate": float(per_agent_rate), "layer_rates": layer_rates,
             "retention": {k: [sum(a for a, _ in v), sum(b for _, b in v)] for k, v in retention.items()},
             "reach": {str(k): v for k, v in reach.items()}, "lifetimes": lifetimes}
 
@@ -182,7 +182,7 @@ def cmd_report(_):
     print("## T. Turnover (retention over 50 units)\n")
     print("| layer | members | retained after 50 units | loss hazard per unit | empirical loss per year | units per week |")
     print("|---|---|---|---|---|---|")
-    for name, emp_label, emp in (("close+", "≈ 2% (5-layer: 1 in 10 years)", 0.02), ("friend+", "≤ 30% (outer layers)", 0.30)):
+    for name, emp_label, emp in (("close+", "2% (Roy et al. 2022: 1-4%)", 0.02), ("friend+", "≤ 30% (convention, upper bound)", 0.30)):
         a = sum(o["retention"][name][0] for o in out)
         b = sum(o["retention"][name][1] for o in out)
         h = -math.log(b / a) / 50.0
@@ -223,18 +223,15 @@ def cmd_report(_):
     print("| anchor | model units per week |\n|---|---|")
     for lab, u in rows:
         print(f"| {lab} | {u:.2f} |")
-    vals = np.array([u for _, u in rows])
-    gm = float(np.exp(np.mean(np.log(vals))))
-    print(f"\nGeometric mean: **{gm:.2f} units per week** (1 unit ≈ {7 / gm:.1f} days); "
-          f"range {vals.min():.2f}–{vals.max():.2f} (a factor {vals.max() / vals.min():.1f}).\n")
+    print("\nThe friend+ turnover anchor is an upper bound on the mapping, so the anchors are not averaged.\n")
+    contact = [u for lab, u in rows if lab.startswith("C:")]
     if "2" in med:
         h_per_int = 90.0 / med["2"][0]
         print(f"Hall: 90 h to friendship over a median of {med['2'][0]:.0f} interactions gives "
               f"{h_per_int:.1f} h per interaction.")
-        print(f"Then social hours per agent per week = {rate:.3f} × {h_per_int:.1f} × units/week: "
-              + ", ".join(f"{rate * h_per_int * u:.0f} h at {u:.2f} units/week" for u in (vals.min(), gm, vals.max())) + ".")
-        print(f"Time to friendship at the geometric mean: {med['2'][1] / gm:.1f} weeks "
-              f"(Hall study 2: friendships formed within the first 9 weeks of college).")
+        print("Social hours per agent per week = "
+              f"{rate:.3f} × {h_per_int:.1f} × units/week: "
+              + ", ".join(f"{rate * h_per_int * u:.0f} h at {u:.2f} units/week" for u in contact) + ".")
     granularity_table()
 
 
@@ -244,24 +241,32 @@ def granularity_table():
     sets = [(1.0, json.loads(OUT.read_text()))] + [(float(f.stem.split("_k")[1]), json.loads(f.read_text())) for f in files]
     WPY = 365.25 / 7
     print("\n## Granularity: finer interactions at the same Q (B × k, η / k)\n")
-    print("| k | contacts/agent/unit | 10th pct close+ contacts/unit | units/week (contact, weekly) | close+ retained / 50 units |"
-          " units/week (close+ turnover 2%/yr) | mismatch | interactions to friend | time to friend (units) |"
-          " hours per interaction (Hall 90 h) | social h/week at contact mapping |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|")
+    print("| k | layers | contacts/agent/unit | units/week (contact, weekly) | units/week (close+ turnover 2%/yr) | "
+          "mismatch | close+ loss per year at contact mapping | hazard close+ / friend+ | contact ratio close+ / friend+ | "
+          "interactions to friend | time to friend (units) | weeks to friend at contact mapping | "
+          "hours per interaction (Hall 90 h) | social h/week at contact mapping | new ties gone within 200 units |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for k, out in sets:
+        layers = " / ".join(f"{v:.1f}" for v in np.mean([o["layers"] for o in out], axis=0))
         rate = np.mean([o["per_agent_rate"] for o in out])
-        p10 = np.percentile(np.concatenate([o["layer_rates"]["close+"] for o in out]), 10)
-        u_c = 1.0 / p10
-        a = sum(o["retention"]["close+"][0] for o in out)
-        b = sum(o["retention"]["close+"][1] for o in out)
-        h = -math.log(b / a) / 50.0
-        u_t = -math.log(0.98) / h / WPY
+        p10 = {n: np.percentile(np.concatenate([o["layer_rates"][n] for o in out]), 10) for n in ("close+", "friend+")}
+        u_c = 1.0 / p10["close+"]
+        hazard = {}
+        for n in ("close+", "friend+"):
+            a = sum(o["retention"][n][0] for o in out)
+            b = sum(o["retention"][n][1] for o in out)
+            hazard[n] = -math.log(b / a) / 50.0
+        u_t = -math.log(0.98) / hazard["close+"] / WPY
+        loss = 1 - math.exp(-hazard["close+"] * u_c * WPY)
         v = [x for o in out for x in o["reach"]["2"]]
         n_f = np.median([x[0] for x in v])
         t_f = np.median([x[1] for x in v])
         hpi = 90.0 / n_f
-        print(f"| {k:g} | {rate:.1f} | {p10:.3f} | {u_c:.2f} | {b / a:.3f} | {u_t:.3f} | {u_c / u_t:.0f}× | {n_f:.0f} | "
-              f"{t_f:.0f} | {hpi:.2f} | {rate * hpi * u_c:.0f} |")
+        lt = np.concatenate([o["lifetimes"] for o in out])
+        gone = np.mean((lt >= 0) & (lt <= 200))
+        print(f"| {k:g} | {layers} | {rate:.1f} | {u_c:.2f} | {u_t:.3f} | {u_c / u_t:.0f}× | {loss:.0%} | "
+              f"{hazard['close+'] / hazard['friend+']:.2f} | {p10['close+'] / p10['friend+']:.2f} | {n_f:.0f} | "
+              f"{t_f:.0f} | {t_f / u_c:.0f} | {hpi:.2f} | {rate * hpi * u_c:.0f} | {gone:.2f} |")
 
 
 def main():

@@ -232,7 +232,11 @@ Each section lists what goes in it, which experiment supports it, and its status
   - early fate of ties by profile;
   - the outer layer scales with exposure, not with N.
 - **Limitations:**
-  - arbitrary time unit;
+  - arbitrary time unit: exp 17 finds no single mapping (close-tie turnover and contact
+    frequency disagree by a factor of 70, and finer interactions trade this against time to
+    friendship);
+  - no turnover gradient across the close+ and friend+ layers, and a weak contact gradient
+    (exp 17);
   - absolute sizes about 3 times smaller than Dunbar's;
   - calibrated thresholds;
   - archetypes are stylised;
@@ -262,9 +266,9 @@ Each section lists what goes in it, which experiment supports it, and its status
 | 3 | ~~Seeds and populations~~ ✅ done for exp 06, 11, 12 and 14 (exp 15). Not covered: exp 07, Morris, N = 400 | | |
 | 4 | Figures 1–10: ✅ drafts (`docs/paper/figures/`, captions in `docs/paper/figures.md`). Fig. 5 and 9 are drawn from exp 15. Docking: Fig. 11 | | |
 | 5 | ~~Pairing race at population level~~ ✅ done (exp 14): a scarcity regime, not generic | | |
-| 6 | **Time-unit mapping** (Hall 2019: hours to make a friend) | needed to compare tie lifetimes with data | modest |
+| 6 | ~~Time-unit mapping~~ ✅ done (exp 17): no single mapping exists; the unit stays arbitrary. Check the primary source of the contact-frequency rule before citing it | | |
 | 7 | **Sobol on the 5 levers** | optional: quantifies variance shares and interactions | about 450 runs |
-| 8 | **Validation pattern not used in calibration**, beyond the inverse regime: tie turnover (Roy et al. 2022; Wellman et al. 1997) | pattern-oriented validation | 1 experiment |
+| 8 | ~~Validation on tie turnover~~ ✅ done (exp 17), with a negative result: close+ and friend+ turn over at about the same rate. To be reported as a limitation | | |
 | 9 | CoMSES deposit, code freeze, DOI | JASSS expects available code | admin |
 
 ## 6. Honesty checklist (things the paper must state)
@@ -276,5 +280,7 @@ Each section lists what goes in it, which experiment supports it, and its status
 - The mean-field and the ABM disagree for small budgets (butterflies, exp 07). The
   mean-field gives thresholds, not probabilities.
 - Single-seed Morris: only the top factors are ranked reliably.
+- The calibrated model does not separate the time scales of tie formation and close-tie
+  turnover (exp 17). Do not quote tie lifetimes in real time.
 - The population draw explains most of the run-to-run variance (exp 15). Report intervals
   over draws; intervals over the seeds of one draw are too narrow.

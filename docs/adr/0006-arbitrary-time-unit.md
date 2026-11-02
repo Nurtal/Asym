@@ -13,3 +13,10 @@ stylised facts such as the half-life of an unmaintained friendship.
 - Parameters should be reported in dimensionless or ratio form where possible.
 - Configs carry no real-time units.
 - Simulation horizon and burn-in are expressed in model units.
+
+## Update: mapping attempted, unit kept arbitrary
+
+Experiment 17 (`docs/experiments/17-time-mapping.md`) tried the mapping against contact
+frequency, turnover and hours to friendship. The anchors disagree by a factor of 70 at the
+calibrated point, and finer interactions improve turnover only by worsening time to
+friendship. The unit therefore stays arbitrary, and results are not quoted in real time.

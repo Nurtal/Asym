@@ -182,10 +182,8 @@ Both at window 1000–1500, random start, 2 seeds.
   as qualitatively insensitive to k = 3 at the window measured, with this limit stated. They
   should not be described as invariant.
 - Report exclusive pairing as more sensitive than the other results.
-- State that the inner circle depends on the start, by about 10% at k = 1 on one seed and
-  draw, and more at k = 3. This matters for comparisons between experiments with an empty
-  start (exp 06, 12, 15 layers and asymmetry) and those with a random start (exp 10, 11, 14,
-  17). It needs more seeds before it can be quantified.
+- State that the inner circle depends on the start, by about 11% at k = 1 (quantified in
+  `19-start-dependence.md`) and more at k = 3 (one seed and draw).
 
 ## Limits
 

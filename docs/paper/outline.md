@@ -240,7 +240,8 @@ Each section lists what goes in it, which experiment supports it, and its status
   - sensitivity to interaction granularity (exp 18): at k = 3, asymmetry, collapse,
     Proposition 2 and the inverse regime hold, exclusive pairing weakens, and relaxation is
     much slower, so this is not yet a test at stationarity;
-  - the inner circle depends on the start (about 10% at k = 1, on one seed and draw);
+  - the inner circle depends on the start (exp 19: 11% smaller from a random start than from
+    an empty one, −0.25 ± 0.09 over 5 draws; other layers and asymmetry change by under 2%);
   - absolute sizes about 3 times smaller than Dunbar's;
   - calibrated thresholds;
   - archetypes are stylised;

@@ -110,11 +110,15 @@ def build_config(j):
 
 
 # ------------------------------------------------------------------ one run
-def run_job(j):
+def run_job(j, transform=None, extra=None):
+    """Run one job. ``transform(raw)`` changes the config before the run, and
+    ``extra(res, out)`` adds measures to the result."""
     from asym import metrics
     from asym.abm.engine import simulate
     from asym.experiments import _agent_counts, layering_per_run
     raw = build_config(j)
+    if transform is not None:
+        raw = transform(raw)
     res = simulate(raw, seed=j["seed"])
     out = dict(j)
     K = len(res.times)
@@ -142,6 +146,8 @@ def run_job(j):
         m14 = _load("m14", "14_pairing_population.py")
         by_group, _ = m14.pairing_metrics(res, raw["globals"]["thresholds"][0])
         out["pairing"] = by_group
+    if extra is not None:
+        extra(res, out)
     return out
 
 

@@ -20,3 +20,5 @@ Experiment 17 (`docs/experiments/17-time-mapping.md`) tried the mapping against 
 frequency, turnover and hours to friendship. The anchors disagree by a factor of 70 at the
 calibrated point, and finer interactions improve turnover only by worsening time to
 friendship. The unit therefore stays arbitrary, and results are not quoted in real time.
+Experiment 18 (`docs/experiments/18-k3-sensitivity.md`) finds the same trade-off after
+recalibrating at k = 3.

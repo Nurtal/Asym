@@ -50,12 +50,20 @@ def base_config(k=1.0):
     spec.loader.exec_module(m)
     raw = m.base_config()
     raw["simulation"].update(horizon=WINDOW[1], burn_in=WINDOW[0], sample_interval=DT, record_events=True)
-    if k != 1.0:
-        g = raw["globals"]
-        g["eta"] = g.get("eta", 0.1) / k
-        g["inv_unit"] = g.get("inv_unit", 1.0) / k
-        g["psi"] = g.get("psi", 0.1) / k
-        for spec in raw["archetypes"].values():
+    return scale_interactions(raw, k)
+
+
+def scale_interactions(raw, k):
+    """Finer interactions at the same Q = ηB/δ: B × k; η, investment unit and cancellation
+    drop / k (Proposition 1)."""
+    if k == 1.0:
+        return raw
+    g = raw["globals"]
+    g["eta"] = g.get("eta", 0.1) / k
+    g["inv_unit"] = g.get("inv_unit", 1.0) / k
+    g["psi"] = g.get("psi", 0.1) / k
+    for spec in raw["archetypes"].values():
+        if "B" in spec:
             spec["B"] = spec["B"] * k
     return raw
 
@@ -63,8 +71,11 @@ def base_config(k=1.0):
 def measure(args):
     from asym.abm.engine import simulate
     from asym.experiments import layering_per_run
-    seed, scale = args
-    res = simulate(base_config(scale), seed=seed)
+    seed, scale, *transform = args
+    raw = base_config(scale)
+    for f in transform:
+        raw = f(raw)
+    res = simulate(raw, seed=seed)
     ids = {a: k for k, a in enumerate(res.agent_ids)}
     N = len(ids)
     T0, T1 = WINDOW

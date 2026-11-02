@@ -237,6 +237,10 @@ Each section lists what goes in it, which experiment supports it, and its status
     friendship);
   - no turnover gradient across the close+ and friend+ layers, and a weak contact gradient
     (exp 17);
+  - sensitivity to interaction granularity (exp 18): at k = 3, asymmetry, collapse,
+    Proposition 2 and the inverse regime hold, exclusive pairing weakens, and relaxation is
+    much slower, so this is not yet a test at stationarity;
+  - the inner circle depends on the start (about 10% at k = 1, on one seed and draw);
   - absolute sizes about 3 times smaller than Dunbar's;
   - calibrated thresholds;
   - archetypes are stylised;
@@ -284,3 +288,5 @@ Each section lists what goes in it, which experiment supports it, and its status
   turnover (exp 17). Do not quote tie lifetimes in real time.
 - The population draw explains most of the run-to-run variance (exp 15). Report intervals
   over draws; intervals over the seeds of one draw are too narrow.
+- k = 1 is a choice, not a calibrated result. The k = 3 check (exp 18) matches k = 1 only
+  during relaxation, and does not show that the results are invariant to k.

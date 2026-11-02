@@ -74,6 +74,11 @@ Q = ηB/δ (Proposition 1).
   rises by a third, as Proposition 2 predicts: less noise means thinner tails. The k > 1
   rows would need recalibrating before they could be compared with the data as results.
 
+**Correction from exp 18:** the k > 1 rows were measured over 300–700, while the model is
+still relaxing. Their layers, and so the comparison with Proposition 2 above, are partly
+transient. A later window, at a recalibrated k = 3, gives similar time measures (7×, 13%,
+77 h, 71 weeks). k = 6 was not rechecked. See `18-k3-sensitivity.md`.
+
 ## Unit-free checks
 
 These do not depend on any mapping, so they test the model directly. Both are weak

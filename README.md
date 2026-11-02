@@ -86,9 +86,10 @@ Experiment reports (`docs/experiments/`):
 | 15 | Robustness across seeds and population draws |
 | 16 | Docking: ABM ensemble mean versus mean-field as rates scale up |
 | 17 | Mapping the model time unit to real time (empirical anchors) |
+| 18 | Main results at k = 3, recalibrated (sensitivity test) |
 
 Scripts without the YAML harness: `experiments/03_…py`, `04_…py`, `07_…py`, `09_aggregate.py`,
-`10_morris.py`, `11_…py`, `13_…py`, `14_…py`, `15_…py`, `16_…py`, `17_…py`, and the calibration tool `experiments/calibrate_layering.py`.
+`10_morris.py`, `11_…py`, `13_…py`, `14_…py`, `15_…py`, `16_…py`, `17_…py`, `18_…py`, and the calibration tool `experiments/calibrate_layering.py`.
 
 ## Benchmark
 
